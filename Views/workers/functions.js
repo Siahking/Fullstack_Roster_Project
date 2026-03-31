@@ -324,7 +324,7 @@ export async function editWorker(event){
             }
         }
     }else if (editLocationsValidityCheck(removeLocationsContainer)){
-        if(!window.confirm("Moving workers will require recreating of some rosters, do you still wish to proceed?")){
+        if(!window.confirm("Moving workers will require the recreating of some rosters, do you still wish to proceed?")){
             displayError(errorTagId,"Operation Canceled")
             return
         }

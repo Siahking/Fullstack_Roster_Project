@@ -184,3 +184,13 @@ tr:last-child td {
 #edit-checkbox-container input{
     margin-right: 5px;
 }
+
+#add-locations-container,#remove-locations-container{
+    width: 100%;
+    display:flex;
+    justify-content: center;
+}
+
+#add-locations-container input,#remove-locations-container input{
+    margin-right: 5px;
+}
