@@ -62,7 +62,7 @@ function assignHours(){
                 }
             }
             if (!hours.length){
-                displayError(errorTagId,"Need to select hours to work after selecting specified")
+                displayError(errorTagId,"Specified hours needs to be selected after selecting specified availability")
                 return [false,[]]
             }
     }
@@ -280,8 +280,8 @@ export async function editWorker(event){
     const newLocationsContainer = document.getElementById("add-locations-container")
     const removeLocationsCheckbox = document.getElementById("remove-location-checkbox")
     const removeLocationsContainer = document.getElementById("remove-locations-container")
-    const availabilityOptions = document.querySelectorAll('[name="edit-availability"]')
-    const hourOptions = document.querySelectorAll('[name="hour-option"]')
+    const availabilityOption = document.querySelectorAll('#availabilities-container input[name="edit-availability"]:checked')
+    const hourOptions = document.querySelectorAll('#hours-container input[name="hour-option"]:checked')
     let newAvailability = null
     let newHours = []
 
@@ -290,31 +290,20 @@ export async function editWorker(event){
         return
     }
 
-    availabilityOptions.forEach(option=>{
-        if (option.checked){
-            if(option.id === "specified-availability"){
-                newAvailability = "Specified"
-                hourOptions.forEach(hour=>{
-                    if(hour.checked){
-                        newHours.push(hour.value)
-                    }
-                })
-                if (newHours.length === 0){
-                    return {"error":"Please select the desired hours of the worker"}
-                }
-            }else{
-                switch(option.id){
-                    case "day-availability":
-                        newAvailability = "Day";
-                    case "night-availability":
-                        newAvailability = "Night";
-                    case "eclipse-availability":
-                        newAvailability = "Eclipse";
-                }
-                newHours = option.value.split(",")
+    if (availabilityOption.length > 0){
+        const option = availabilityOption[0]
+        if (option.id === "specified-availability"){
+            newAvailability = "Specified"
+            if (hourOptions.length === 0){
+                displayError(errorTagId,"Specified hours needs to be selected after selecting specified availability")
+                return
             }
+            newHours.push(hourOptions[0].value)
+        }else{
+            newAvailability = option.id
+            newHours.push(...option.value.split(","))
         }
-    })
+    }
 
     const args = [newFirstName,newLastName,newMiddleName,newGender,newAddress,newContact,newIdNumber,newAvailability,newHours]
     if (
@@ -325,17 +314,41 @@ export async function editWorker(event){
         displayError(errorTagId,"Nothing to update, please select values to be updated")
         return
     }
+    if (editLocationsValidityCheck(newLocationsContainer)){
+        const checkedBoxes = document.querySelectorAll('#add-locations-container input[type="checkbox"]:checked');
+        for (const box of checkedBoxes){
+            const result = await apiFuncs.linkWorkerLocations(idStr,box.value)
+            if (result.error){
+                displayError(errorTagId,result.error)
+                return
+            }
+        }
+    }else if (editLocationsValidityCheck(removeLocationsContainer)){
+        if(!window.confirm("Moving workers will require recreating of some rosters, do you still wish to proceed?")){
+            displayError(errorTagId,"Operation Canceled")
+            return
+        }
+        const checkedBoxes = document.querySelectorAll('#remove-locations-container input[type="checkbox"]:checked');
+        for (const box of checkedBoxes){
+            const result = await apiFuncs.removeConnections("",idStr,box.value)
+            if (result.error){
+                displayError(errorTagId,result.error)
+                return
+            }
+        }
+    }
 
-    // const result = await apiFuncs.editWorker(idStr,...args)
+    if (argsCheck(args)){
+        const result = await apiFuncs.editWorker(idStr,...args)
+        if (result.error){
+            displayError(errorTagId,result.error)
+            return
+        }
+    }
 
-    // if (objectCheck(result)){
-    //     displayError(errorTagId,result.error)
-    //     return
-    // }else{
-    //     sessionStorage.setItem("Message",result.message)
-    //     window.location.href = '/home'
-    //     return
-    // }
+    sessionStorage.setItem("Message","Worker updated successfully")
+    window.location.href = '/home'
+    return
 }
 
 function argsCheck(args){

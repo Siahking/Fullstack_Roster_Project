@@ -156,7 +156,7 @@ export async function toggleEditLocations(checkboxId){
     }
 
     const workerLocations = await workerLocationSearch("worker_id",targetId)
-    const workerLocationsArr = workerLocations.map(obj=>obj.location_id)
+    const workerLocationsArr = workerLocations.error ? [] : workerLocations.map(obj=>obj.location_id)
 
     if (checkboxId === "new-location-checkbox"){
         const displayArr = LOCATIONS.filter(obj => !workerLocationsArr.includes(obj.id))
@@ -174,6 +174,12 @@ export async function toggleEditLocations(checkboxId){
 }
 
 function populateEditContainer(checkbox,container,displayArr,opposingContainer,opposingCheckbox){
+    if(displayArr.length === 0){
+        const locationsTag = document.createElement("p")
+        locationsTag.innerText = "No Locations available for display"
+        container.appendChild(locationsTag)
+        container.classList.remove("hidden")
+    }
     if (checkbox.checked){
         opposingCheckbox.checked = false
         opposingContainer.innerHTML = ""
@@ -185,6 +191,7 @@ function populateEditContainer(checkbox,container,displayArr,opposingContainer,o
 
             input.setAttribute("id",`${object.id}-location`)
             input.setAttribute("type","checkbox")
+            input.setAttribute("value",`${object.id}`)
 
             label.appendChild(input)
             label.setAttribute("for",`${object.id}-location`)
