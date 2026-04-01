@@ -84,3 +84,10 @@ a:hover,button:hover{
 #roster-form label{
     margin-bottom: 3px;
 }
+
+#view-roster-locations-container{
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}

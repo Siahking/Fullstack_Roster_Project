@@ -3,8 +3,12 @@ import * as apiFuncs from "../backend.js"
 export async function loadRosters(){
     const container = document.getElementById("container")
     const dataRaw = localStorage.getItem("locationData")
-    const data = JSON.parse(dataRaw)
-    const rosters = []
+    let data = JSON.parse(dataRaw)
+    let rosters = []
+
+    if (data.length === 0){
+        rosters = await apiFuncs.retrieveRosters()
+    }
 
     for (const value of data){
         const roster = await apiFuncs.retrieveRosters(value.rosterId)
@@ -16,6 +20,7 @@ export async function loadRosters(){
 
         const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const date = new Date(year, month - 1, 1);
+        const monthName = date.toLocaleString('en-US', { month: 'long' });
         const firstDayOfWeek = date.getDay();
         const daysInMonth = new Date(year, month, 0).getDate();
         const calendarContainer = document.createElement("div")
@@ -35,7 +40,7 @@ export async function loadRosters(){
 
         deleteBtn.addEventListener("click",(event)=>deleteRosterHandler(event))
 
-        locationName.innerText = data[index].location
+        locationName.innerText = `${data[index].location} - ${monthName} ${year}`
         locationNameContainer.appendChild(locationName)
         headerContainer.appendChild(locationNameContainer)
 
@@ -85,8 +90,10 @@ export async function loadRosters(){
 }
 
 async function insertWorkers(rosterId,rosterDate){
+    console.log("passed here")
 
     const rosterData = await apiFuncs.retrieveRosterEntries("",rosterId,"",rosterDate,"")
+    console.log(rosterId,rosterDate)
 
     const morningShiftBlock = document.createElement("div");
     morningShiftBlock.className = "shift-block shift-1";

@@ -120,7 +120,9 @@ export async function generateCalender(month,year){
         errorContainer.setAttribute("id",`location-${location.id}-error-container`)
         errorContainer.appendChild(errorTag)
 
-        locationName.innerText = location.location
+        const date = new Date(year, month - 1, 1);
+        const monthName = date.toLocaleString('en-US', { month: 'long' });
+        locationName.innerText = `${location.location} - ${monthName} ${year}`
         headerContainer.appendChild(locationName)
         if (objectCheck(WORKERS)){
             locationErrorTag.innerText = "No workers found for this Location"
@@ -137,7 +139,6 @@ export async function generateCalender(month,year){
         const calendarContainer = document.createElement("div")
         calendarContainer.classList.add("specified-hidden")
         const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        const date = new Date(year, month - 1, 1);
         const firstDayOfWeek = date.getDay();
         const daysInMonth = new Date(year, month, 0).getDate();
 

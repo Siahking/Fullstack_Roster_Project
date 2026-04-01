@@ -35,7 +35,6 @@ export async function loadContents(){
 }
 
 export function saveDateAndLocations(event){
-
     event.preventDefault()
 
     const locationsInput = document.getElementsByClassName("location-option")
@@ -77,22 +76,23 @@ export function saveDateAndLocations(event){
 }
 
 export function findRosters(event){
-
     event.preventDefault()
 
-    const rosterLocations = document.querySelectorAll(`[name="roster-location"]`) 
+    const rosterLocations = document.querySelectorAll(`[name="roster-location"]:checked`)
+    if (rosterLocations.length === 0){
+        displayError("roster-error","Please select atleast one location")
+        return
+    }
     const selectedLocations = []
 
     for (const tag of rosterLocations){
-        if (tag.checked){
-            const obj = {
-                "location":tag.dataset.location,
-                "rosterId":tag.dataset.rosterid
-            }
-            selectedLocations.push(obj)
+        const obj = {
+            "location":tag.dataset.location,
+            "rosterId":tag.dataset.rosterid
         }
+        selectedLocations.push(obj)
     }
-
+    
     localStorage.setItem("locationData",JSON.stringify(selectedLocations))
     window.location.href = "/find-rosters"
 }

@@ -74,15 +74,45 @@ export async function retrieveLocations(){
         input.setAttribute("data-rosterid",result.roster_id)
 
         const labelText = document.createTextNode(`${location}`)
-        label.setAttribute("for",`${location}-roster`)
+        label.setAttribute("for",`${id}-roster`)
 
         label.appendChild(input)
         label.appendChild(labelText)
         locationsContainer.appendChild(label)
     };
 
+    const allLabel = document.createElement("label")
+    const allInput = document.createElement("input")
+    const labelText = document.createTextNode("Select All")
+    allLabel.setAttribute("for","select-all-rosters")
+
+    allInput.setAttribute("type","checkbox")
+    allInput.setAttribute("id","select-all-rosters")
+    allInput.setAttribute("month",month)
+    allInput.setAttribute("year",year)
+    allLabel.addEventListener("click",()=>toggleBoxes())
+    allLabel.appendChild(allInput)
+    allLabel.appendChild(labelText)
+    locationsContainer.appendChild(allLabel)
+
     errorContainer.classList.add("specified-hidden")
     for(const tag of [locationIdentifier,submitBtn])tag.classList.remove("specified-hidden")
     locationsContainer.classList.remove("specified-hidden")
     lowerContainer.classList.remove("specified-hidden")
+}
+
+function toggleBoxes(){
+    const currentCheckbox = document.getElementById("select-all-rosters")
+    const locationsContainer = document.getElementById("view-roster-locations-div")
+    const boxes = locationsContainer.getElementsByClassName("roster-option")
+
+    if (currentCheckbox.checked){
+        for (const box of boxes){
+            box.checked = true
+        }
+    }else{
+        for (const box of boxes){
+            box.checked = false
+        }
+    }
 }

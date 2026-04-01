@@ -28,7 +28,7 @@ export async function saveRoster(errorTagId,LocationId,workersDetail){
             const shiftType = workerDetail.getAttribute("shifttype")
             let day = workerDetail.getAttribute("day")
             const monthYear = workerDetail.getAttribute("monthyear")
-            const [month,year] = monthYear.split("-")
+            let [month,year] = monthYear.split("-")
 
             if (parseInt(month) < 10) month = `0${month}`
             if (parseInt(day) < 10)day = `0${day}`
@@ -41,6 +41,9 @@ export async function saveRoster(errorTagId,LocationId,workersDetail){
                 break
             }
         }
+    }catch(error){
+        console.log(error)
+        return
     }finally{   
         document.body.style.cursor = "default"
         document.body.style.pointerEvents = "auto"
