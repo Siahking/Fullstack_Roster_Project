@@ -27,7 +27,6 @@ export async function removeConstraint(id){
 }
 
 export async function addConstraint(event){
-
     event.preventDefault()
 
     if (worker1Id.value === worker2Id.value){

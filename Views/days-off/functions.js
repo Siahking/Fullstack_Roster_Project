@@ -96,6 +96,11 @@ export async function newDaysOff(event){
     const workerDetails = await apiFuncs.findWorker("","","","",workerId)
     const workerLocations = await apiFuncs.workerLocationSearch("worker_id",workerId)
 
+    if (workerLocations.error){
+        displayError(errorTagId,"A worker with this ID does not exist")
+        return
+    }
+
     for(const result of workerLocations){
         const checkResults = await helperFuncs.validateCoverage(result.location_id,startDate,endDate,workerDetails[0])
         if (!checkResults){
@@ -106,6 +111,7 @@ export async function newDaysOff(event){
     }
 
     const result = await apiFuncs.addDaysOff(workerId,startDate,endDate)
+    console.log(result)
 
     if (objectCheck(result)){
         displayError(errorTagId,result.error)

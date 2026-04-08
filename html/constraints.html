@@ -30,6 +30,9 @@
                   <li class="nav-item">
                     <a class="nav-link" href="/days-off">Days Off</a>
                   </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/account-info">Account</a>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -71,7 +74,7 @@
                     </label>
                     <label for="summary" class="bold">
                         Summary
-                        <input type="text" id="summary" placeholder="Type here" class="text-number-input" autocomplete="off">
+                        <input type="text" id="summary" placeholder="Type here" class="text-number-input" autocomplete="new-password">
                     </label>
     
                     <button type="submit"  class="green-btn">Add</button>
@@ -84,21 +87,21 @@
                         <div id="worker1-data" class="worker-data">
                             <label for="worker1-firstname" class="bold">
                                 Worker 1 Firstname
-                                <input type="text" id="worker1-firstname" placeholder="Type here" class="text-number-input" autocomplete="off">
+                                <input type="text" id="worker1-firstname" placeholder="Type here" class="text-number-input" autocomplete="new-password">
                             </label>
                             <label for="worker1-lastname" class="bold">
                                 Worker 1 Lastname
-                                <input type="text" id="worker1-lastname" placeholder="Type here" class="text-number-input" autocomplete="off">
+                                <input type="text" id="worker1-lastname" placeholder="Type here" class="text-number-input" autocomplete="new-password">
                             </label>
                         </div>
                         <div id="worker2-data" class="worker-data">
                             <label for="worker2-firstname" class="bold">
                                 Worker 2 Firstname
-                                <input type="text" id="worker2-firstname" placeholder="Type here" class="text-number-input" autocomplete="off">
+                                <input type="text" id="worker2-firstname" placeholder="Type here" class="text-number-input" autocomplete="new-password">
                             </label>
                             <label for="worker2-lastname" class="bold">
                                 Worker 2 Lastname
-                                <input type="text" id="worker2-lastname" placeholder="Type here" class="text-number-input" autocomplete="off">
+                                <input type="text" id="worker2-lastname" placeholder="Type here" class="text-number-input" autocomplete="new-password">
                             </label>
                         </div>
                     </div>
@@ -129,14 +132,14 @@
                         Summary
                         <input type="checkbox" id="summary-checkbox">
                     </label>
-                    <input type="text" class="hidden text-number-input" id="new-summary-input" placeholder="Type here" autocomplete="off">
+                    <input type="text" class="hidden text-number-input" id="new-summary-input" placeholder="Type here" autocomplete="new-password">
                     <button type="submit" class="green-btn">Change Constraint</button>
                 </form>
             </div>
     
         </div>
 
-        <div id="constraints-error-container" class="hidden error-container">
+        <div id="constraints-error-container" class="specified-hidden error-container">
             <p id="constraints-error-tag" class="error-tag"></p>
         </div>
          

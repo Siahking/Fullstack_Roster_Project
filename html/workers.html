@@ -30,6 +30,9 @@
                   <li class="nav-item">
                     <a class="nav-link" href="/days-off">Days Off</a>
                   </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/account-info">Account</a>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -60,15 +63,15 @@
                 <div id="name-info-div">
                     <label for="add-first-name-input" class="text-input-label bold">
                         First  Name
-                        <input type="text" class="text-number-input" id="add-first-name-input" placeholder="Type here" autocomplete="off" required>
+                        <input type="text" class="text-number-input" id="add-first-name-input" placeholder="Type here" autocomplete="new-password" required>
                     </label>
                     <label for="add-middle-name-input" class="text-input-label bold">
                         Middle  Name
-                        <input type="text" class="text-number-input" id="add-middle-name-input" placeholder="Type here" autocomplete="off">
+                        <input type="text" class="text-number-input" id="add-middle-name-input" placeholder="Type here" autocomplete="new-password">
                     </label>
                     <label for="add-last-name-input" class="text-input-label bold">
                         Last  Name
-                        <input type="text" class="text-number-input" id="add-last-name-input" placeholder="Type here" autocomplete="off" required>
+                        <input type="text" class="text-number-input" id="add-last-name-input" placeholder="Type here" autocomplete="new-password" required>
                     </label>
                 </div>
                 <div id="gender-address-info-div">
@@ -83,7 +86,7 @@
                     </label>
                     <label for="add-address-input" class="bold">
                         Address
-                        <input type="text" class="text-number-input" id="add-address-input" placeholder="Type here" autocomplete="off" required>
+                        <input type="text" class="text-number-input" id="add-address-input" placeholder="Type here" autocomplete="new-password" required>
                     </label>
                     <label for="add-age-input" class="bold">
                         Age
@@ -93,7 +96,7 @@
                 <div id="contact-id-info-div">
                     <label for="add-contact-input" class="bold">
                         Contact
-                        <input type="text" class="text-number-input" id="add-contact-input" placeholder="Type here" autocomplete="off">
+                        <input type="text" class="text-number-input" id="add-contact-input" placeholder="Type here" autocomplete="new-password">
                     </label>
                     <label for="add-id-number-input" class="bold">
                         ID Number
@@ -159,27 +162,27 @@
                 <label for="id" class="bold">
                     ID
                     <input type="checkbox" id="id" name="id">
-                    <input autocomplete="off" type="number" id="id-input" class="hidden text-number-input" placeholder="Type Here">
+                    <input autocomplete="new-password" type="number" id="id-input" class="hidden text-number-input" placeholder="Type Here">
                 </label>
                 <label for="first-name" class="bold">
                     First Name
                     <input type="checkbox" id="first-name">
-                    <input autocomplete="off" type="text" id="first-name-input" class="hidden text-number-input" placeholder="Type Here">
+                    <input autocomplete="new-password" type="text" id="first-name-input" class="hidden text-number-input" placeholder="Type Here">
                 </label>
                 <label for="last-name" class="bold">
                     Last Name
                     <input type="checkbox" id="last-name">
-                    <input autocomplete="off" type="text" id="last-name-input" class="hidden text-number-input" placeholder="Type Here">
+                    <input autocomplete="new-password" type="text" id="last-name-input" class="hidden text-number-input" placeholder="Type Here">
                 </label>
                 <label for="middle-name" class="bold">
                     Middle Name
                     <input type="checkbox" id="middle-name">
-                    <input autocomplete="off" type="text" id="middle-name-input" class="hidden text-number-input" placeholder="Type Here">
+                    <input autocomplete="new-password" type="text" id="middle-name-input" class="hidden text-number-input" placeholder="Type Here">
                 </label>
                 <label for="id-number" class="bold">
                     ID Number
                     <input type="checkbox" id="id-number">
-                    <input autocomplete="off" type="text" id="id-number-input" class="hidden text-number-input" placeholder="Type Here">
+                    <input autocomplete="new-password" type="text" id="id-number-input" class="hidden text-number-input" placeholder="Type Here">
                 </label>
                 <button id="search-button" class="green-btn">Search</button>
             </form>
@@ -187,41 +190,41 @@
         <div id="edit-worker-div" class="hidden">
             <form id="edit-worker-form">
                 <label for="target-id" class="bold">Worker ID</label>
-                <input type="text" id="target-id" autocomplete="off" placeholder="Type Here" class="text-number-input" required>
+                <input type="text" id="target-id" autocomplete="new-password" placeholder="Type Here" class="text-number-input" required>
                 <label for="newFirstname" class="bold">
                     <input type="checkbox" id="newFirstNameCheckbox">
                     Edit Firstname
-                    <input type="text" id="newFirstName" autocomplete="off" placeholder="Type Here" class="hidden text-number-input">
+                    <input type="text" id="newFirstName" autocomplete="new-password" placeholder="Type Here" class="hidden text-number-input">
                 </label>
                 <label for="newFirstname" class="bold">
                     <input type="checkbox" id="newLastNameCheckbox">
                     Edit Lastname
-                    <input type="text" id="newLastName" autocomplete="off" placeholder="Type Here" class="hidden text-number-input">
+                    <input type="text" id="newLastName" autocomplete="new-password" placeholder="Type Here" class="hidden text-number-input">
                 </label>
                 <label for="newMiddlename" class="bold">
                     <input type="checkbox" id="newMiddleNameCheckbox">
                     Edit Middlename
-                    <input type="text" id="newMiddleName" autocomplete="off" placeholder="Type Here" class="hidden text-number-input">
+                    <input type="text" id="newMiddleName" autocomplete="new-password" placeholder="Type Here" class="hidden text-number-input">
                 </label>
                 <label for="newGender" class="bold">
                     <input type="checkbox" id="newGenderCheckbox">
                     Edit Gender
-                    <input type="text" id="newGender" autocomplete="off" placeholder="Type Here" class="hidden text-number-input">
+                    <input type="text" id="newGender" autocomplete="new-password" placeholder="Type Here" class="hidden text-number-input">
                 </label>
                 <label for="newAddress" class="bold">
                     <input type="checkbox" id="newAddressCheckbox">
                     Edit Address
-                    <input type="text" id="newAddress" autocomplete="off" placeholder="Type Here" class="hidden text-number-input">
+                    <input type="text" id="newAddress" autocomplete="new-password" placeholder="Type Here" class="hidden text-number-input">
                 </label>
                 <label for="newContact" class="bold">
                     <input type="checkbox" id="newContactCheckbox">
                     Edit Contact
-                    <input type="text" id="newContact" autocomplete="off" placeholder="Type Here" class="hidden text-number-input">
+                    <input type="text" id="newContact" autocomplete="new-password" placeholder="Type Here" class="hidden text-number-input">
                 </label>
                 <label for="newIdNumber" class="bold">
                     <input type="checkbox" id="newIdNumberCheckbox">
                     Edit IdNumber
-                    <input type="text" id="newIdNumber" autocomplete="off" placeholder="Type Here" class="hidden text-number-input">
+                    <input type="text" id="newIdNumber" autocomplete="new-password" placeholder="Type Here" class="hidden text-number-input">
                 </label>
                 <label for="editLocationsCheckbox" class="bold" id="editLocationsLabel">
                     <div id="edit-checkbox-container">
@@ -241,10 +244,6 @@
                         <div id="remove-locations-container" class="hidden"></div>
                     </div>
                     
-                    <!-- <div id="wrapper">
-                        <input type="text" id="newLocations" autocomplete="off" placeholder="Start typing..." class="hidden text-number-input">
-                        <div class="hidden" id="search-items"></div>
-                    </div> -->
                 </label>
                 <label for="newAvailabilityCheckbox" class="bold">
                     <input type="checkbox" id="newAvailabilityCheckbox">

@@ -20,8 +20,8 @@ export async function displayDaysOff(){
 
         idInfo.innerText = result.break_id
         workerInfo.innerText = `${workerData.first_name} ${workerData.last_name}`
-        startDate.innerText = result.start_date
-        endDate.innerText = result.end_date
+        startDate.innerText = result.start_date.split("T")[0]
+        endDate.innerText = result.end_date.split("T")[0]
 
         deleteBtn.id = `delete_${result.break_id}`
         deleteBtn.classList.add("delete-btn")

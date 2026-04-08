@@ -30,6 +30,9 @@
                   <li class="nav-item">
                     <a class="nav-link" href="/days-off">Days Off</a>
                   </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/account-info">Account</a>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -55,15 +58,15 @@
     <form id="edit-options-container" class="hidden">
       <label for="new-username">
           New Username
-          <input type="text" id="new-username" placeholder="Type Here">
+          <input type="text" id="new-username" placeholder="Type Here" autocomplete="new-password">
       </label>
       <label for="new-password">
           New Password
-          <input type="text" id="new-password" placeholder="Type Here">
+          <input type="text" id="new-password" placeholder="Type Here" autocomplete="new-password">
       </label>
       <label for="confirm-password" id="confirmation-label" class="hidden">
         Confirm Password
-        <input type="text" id="confirm-password" placeholder="Type here">
+        <input type="text" id="confirm-password" placeholder="Type here" autocomplete="new-password">
       </label>
       <button id="save-new-info" type="submit" class="green-btn">Save</button>
     </form>

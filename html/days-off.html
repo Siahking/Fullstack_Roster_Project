@@ -30,6 +30,9 @@
                   <li class="nav-item">
                     <a class="nav-link" href="/days-off">Days Off</a>
                   </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/account-info">Account</a>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -101,27 +104,27 @@
                 <label for="breakId" class="bold">
                     Break ID
                 </label>
-                <input type="number" id="breakId" autocomplete="off" placeholder="Type Here" class="text-number-input">
+                <input type="number" id="breakId" autocomplete="new-password" placeholder="Type Here" class="text-number-input">
                 <label for="newWorkerId" class="bold">
                     <input type="checkbox" id="newWorkerId" name="checkbox">
                     New Worker ID
                 </label>
-                <input type="number" id="newWorkerId-value" placeholder="Type here" autocomplete="off" class="text-number-input hidden">
+                <input type="number" id="newWorkerId-value" placeholder="Type here" autocomplete="new-password" class="text-number-input hidden">
                 <label for="newStartTime" class="bold">
                     <input type="checkbox" id="newStartTime" name="checkbox">
                     New StartDate
                 </label>
-                <input type="date" id="newStartTime-value" placeholder="Type Here" autocomplete="off" class="hidden">
+                <input type="date" id="newStartTime-value" placeholder="Type Here" autocomplete="new-password" class="hidden">
                 <label for="newEndTime" class="bold">
                     <input type="checkbox" id="newEndTime" name="checkbox">
                     New EndDate
                 </label>
-                <input type="date" id="newEndTime-value" placeholder="Type Here" autocomplete="off" class="hidden">
+                <input type="date" id="newEndTime-value" placeholder="Type Here" autocomplete="new-password" class="hidden">
                 <button class="green-btn">Edit</button>
             </form>
         </div>
     </div>
-    <div class="hidden error-container" id="days-off-error-container">
+    <div class="specified-hidden error-container" id="days-off-error-container">
         <p id="days-off-error-tag" class="error-tag"></p>
     </div>
 
@@ -209,7 +212,7 @@
                 </div>
                 <label for="id-value-input" class="bold">
                     ID Value
-                    <input type="text" id="id-value-input" placeholder="Type here" autocomplete="off">
+                    <input type="text" id="id-value-input" placeholder="Type here" autocomplete="new-password">
                 </label>
                 <button class="green-btn">Search</button>
             </form>
@@ -220,7 +223,7 @@
                 <label for="restriction-target-id" class="bold">
                     Restriction ID
                 </label>
-                <input type="number" id="restriction-target-id" autocomplete="off" placeholder="Type Here" class="text-number-input">
+                <input type="number" id="restriction-target-id" autocomplete="new-password" placeholder="Type Here" class="text-number-input">
                 <label for="newWorkerCheckbox" class="bold">
                     <input type="checkbox" id="newWorkerCheckbox">
                     New Worker
