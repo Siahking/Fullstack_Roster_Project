@@ -11,6 +11,9 @@
 <body>
     <h1>OptiRoster</h1>
     <h3>Login</h3>
+    <div id="message-container" class="error-container specified-hidden">
+        <p id="message-tag" style="color: green;"></p>
+    </div>
     <p id="message-tag" class="hidden"></p>
     <div id="buttons-container">
         <button id="login-button">
@@ -20,15 +23,15 @@
             Sign Up
         </button>
     </div>
-    <div id="info-container" class="hidden">
+    <form id="info-container" class="hidden">
         <label for="username">Username</label>
         <input type="text" id="username" placeholder="Type here" autocorrect="off" name="fake-email" autocomplete="new-password">
         <label for="password">Password</label>
         <input type="text" id="password" placeholder="Type here" autocorrect="off" autocomplete="new-password">
         <button id="submit-button">Submit</button>
-    </div>
+    </form>
     <div id="error-container" class="error-container specified-hidden">
-        <p id="error-tag"></p>
+        <p id="error-tag" style="color: red;"></p>
     </div>
     <script type="module" src="../views/login/frontend.js"></script>
     <script type="module" src="../views/login/main.js"></script>
