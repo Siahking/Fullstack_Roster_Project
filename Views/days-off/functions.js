@@ -103,9 +103,8 @@ export async function newDaysOff(event){
 
     for(const result of workerLocations){
         const checkResults = await helperFuncs.validateCoverage(result.location_id,startDate,endDate,workerDetails[0])
-        if (!checkResults){
-            message = "Insufficient workers, cannot request day off"
-            displayError(errorTagId,message)
+        if (checkResults.error){
+            displayError(errorTagId,checkResults.error)
             return
         }
     }
