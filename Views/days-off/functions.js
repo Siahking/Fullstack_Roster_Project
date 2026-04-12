@@ -124,23 +124,18 @@ export async function newDaysOff(event){
 export async function deleteDaysOff(event){
     const breakId = event.target.value
 
-    if (deleteConfirmation("worker")){
-        const result = await apiFuncs.removeDaysOff(breakId)
+    const result = await apiFuncs.removeDaysOff(breakId)
 
-        if (objectCheck(result)){
-            displayError(errorTagId,result.error)
-            return
-        }
-
-        sessionStorage.setItem("Message",result.message)
-        window.location.href = "/home"
-    }else{
-        displayError(errorTagId,"Operation Canceled")
+    if (objectCheck(result)){
+        displayError(errorTagId,result.error)
+        return
     }
+
+    sessionStorage.setItem("Message",result.message)
+    window.location.href = "/home"
 }
 
 export async function findDaysOff(event){
-
     event.preventDefault()
     let result
 
@@ -154,7 +149,7 @@ export async function findDaysOff(event){
     }
 
     if (objectCheck(result)){
-        displayDaysOff(errorTagId,result.error)
+        displayError(errorTagId,result.error)
         return
     }
 
@@ -163,7 +158,6 @@ export async function findDaysOff(event){
 }
 
 export async function editDaysOff(event){
-
     event.preventDefault()
 
     const breakId = document.getElementById("breakId").value
@@ -176,6 +170,21 @@ export async function editDaysOff(event){
         return
     }
 
+    const daysOffData = await apiFuncs.getDaysOff("break_id",breakId)
+    console.log(daysOffData)
+    if (daysOffData.error){
+        displayError(errorTagId,"Days Off Data with this ID does not exist")
+        return
+    }
+
+    if (newWorker_Id){
+        const workerData = await apiFuncs.findWorker("","","","",newWorker_Id)
+        if (workerData.error){
+            displayError(errorTagId,"A worker with this ID does not exist")
+            return
+        }
+    }
+    
     const result = await apiFuncs.editDaysOff(breakId,newWorker_Id,newStartDate,newEndDate)
 
     if(objectCheck(result)){
@@ -183,6 +192,6 @@ export async function editDaysOff(event){
         return
     }else{
         sessionStorage.setItem("Message",result.message)
-        location.href = "/"
+        location.href = "/home"
     }
 }

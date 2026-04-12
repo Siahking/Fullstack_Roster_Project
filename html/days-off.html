@@ -99,6 +99,10 @@
             </form>
         </div>
 
+        <div class="specified-hidden error-container" id="days-off-error-container">
+            <p id="days-off-error-tag" class="error-tag"></p>
+        </div>
+
         <div id="edit-days-off-div" class="hidden">
             <form id="edit-days-off-form">
                 <label for="breakId" class="bold">
@@ -124,9 +128,6 @@
             </form>
         </div>
     </div>
-    <div class="specified-hidden error-container" id="days-off-error-container">
-        <p id="days-off-error-tag" class="error-tag"></p>
-    </div>
 
     <div class="table-div">
         <h1>Permanent Restrictions</h1>
@@ -148,6 +149,10 @@
         <button id="add-restriction-btn" class="grey-btn">Add restriction</button>
         <button id="find-restriction-btn" class="grey-btn">Find restriction</button>
         <button id="edit-restriction-btn" class="grey-btn">Edit restriction</button>
+    </div>
+
+    <div class="specified-hidden error-container" id="restriction-error-container">
+        <p id="restriction-error-tag" class="error-tag"></p>
     </div>
 
     <div class="data-input-container" id="restriction-container">
@@ -202,7 +207,7 @@
             <form id="find-restriction-form">
                 <div id="restriction-ids-div">
                     <label for="restriction-id" class="bold">
-                        ID
+                        Break ID
                         <input type="radio" id="restriction-id" name="column-input">
                     </label>
                     <label for="restriction-worker-id" class="bold">
@@ -212,7 +217,7 @@
                 </div>
                 <label for="id-value-input" class="bold">
                     ID Value
-                    <input type="text" id="id-value-input" placeholder="Type here" autocomplete="new-password">
+                    <input type="number" id="id-value-input" placeholder="Type here" autocomplete="off">
                 </label>
                 <button class="green-btn">Search</button>
             </form>
@@ -284,10 +289,6 @@
                 <button class="green-btn">Edit</button>
             </form>
         </div>
-    </div>
-
-    <div class="hidden error-container" id="restriction-error-container">
-        <p id="restriction-error-tag" class="error-tag"></p>
     </div>
     
     <script type="module" src="../views/days-off/main.js"></script>

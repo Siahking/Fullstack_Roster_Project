@@ -29,8 +29,18 @@ export async function displayRestrictions() {
         firstNameData.innerText = workerData.first_name
         lastNameData.innerText = workerData.last_name
         dayOfWeekData.innerText = restriction.day_of_week
-        startTimeData.innerText = restriction.start_time ?  "--" :  restriction.start_time
-        endTimeData.innerText = restriction.end_time ?  "--" :  restriction.end_time
+
+        if (restriction.start_time){
+            startTimeData.innerText = restriction.start_time.split(":").splice(0,2).join(":")
+        }else{
+            startTimeData.innerText = "--"
+        }
+
+        if (restriction.end_time){
+            endTimeData.innerText = restriction.end_time.split(":").splice(0,2).join(":")
+        }else{
+            endTimeData.innerText = "--"
+        }
         
         for (const data of [idData,firstNameData,lastNameData,dayOfWeekData,startTimeData,endTimeData,deleteBtn]){
             tableRow.appendChild(data)

@@ -46,9 +46,19 @@ export async function displayRestrictions(){
         firstNameData.innerText = workerData.first_name
         lastNameData.innerText = workerData.last_name
         dayOfWeekData.innerText = restriction.day_of_week
-        startTimeData.innerText = restriction.start_time ? restriction.start_time : "--"  
-        endTimeData.innerText = restriction.end_time ? restriction.end_time : "--"
-        
+
+        if (restriction.start_time){
+            startTimeData.innerText = restriction.start_time.split(":").splice(0,2).join(":")
+        }else{
+            startTimeData.innerText = "--"
+        }
+
+        if (restriction.end_time){
+            endTimeData.innerText = restriction.end_time.split(":").splice(0,2).join(":")
+        }else{
+            endTimeData.innerText = "--"
+        }
+
         for (const data of [restrictionIdData,workerIdData,firstNameData,lastNameData,dayOfWeekData,startTimeData,endTimeData,deleteBtn]){
             tableRow.appendChild(data)
         }
@@ -66,13 +76,14 @@ export async function findRestriction(event) {
     const idValue = document.getElementById("id-value-input")
     let results
 
-    if (workerIdRadio.checked){
+    if (!workerIdRadio.checked && !idRadio.checked || idValue.value === ""){
+        displayError(errorTagId,"Please select an ID AND insert a search Value")
+        return 
+    }
+    else if (workerIdRadio.checked){
         results = await apiFuncs.findPermanentRestrictions("worker_id",idValue.value)
     } else if (idRadio.checked){
         results = await apiFuncs.findPermanentRestrictions("id",idValue.value)
-    } else{
-        displayError(errorTagId,"Please select an id to search from")
-        return 
     }
 
     if(objectCheck(results)){
