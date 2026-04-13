@@ -263,30 +263,23 @@ export async function filterWorkers(workerId,shiftType,locationId,date,otherWork
         apiFuncs.getConstraints("",workerId)
     ])
 
-    if (!objectCheck(daysOff)){
+    if (!daysOff.error){
         excludedWorkers = await dayOffCheck(day,month,year,daysOff)
     }
         
-    const shiftWorkers = []
-    const workerOptions = []
-    
-    for (const worker of workers){
-        if(worker["hours"].includes(shiftType)){
-            shiftWorkers.push(worker)
-        }
-    }
+    const workerOptions = workers.filter(worker =>{
+        const isAvailable = worker["hours"].includes(shiftType) || worker["hours"].includes("24hrs")
+        if (!isAvailable)return false
 
-    for (const worker of shiftWorkers) {
-        const wId = worker.id
+        if (worker.id == workerId || worker.id == coworkerId)return false
 
-        if (wId == workerId || wId == coworkerId)continue
-        if (excludedWorkers[`${workerId}`])continue
+        if (excludedWorkers[workerId])return false
 
         const isRestricted = restrictionCheck(dayName,workerId,shiftType)
-        if (!isRestricted)continue
+        if (!isRestricted)return false
 
-        workerOptions.push(worker)
-    }
+        return true
+    })
 
     return validateConstraint(constraints,workerOptions,otherWorkers)
 }
@@ -303,10 +296,9 @@ export async function filterGeneralShiftWorkers(shiftType,locationId,date,otherW
         
         if (!worker["hours"].includes(shiftType))continue
         
-
         const daysOff = await apiFuncs.getDaysOff("worker_id",worker.id)
         let isOff = false
-        if (!objectCheck(daysOff)){
+        if (!daysOff.error){
             const excluded = await dayOffCheck(day, month, year, daysOff)
             if (excluded[worker.id])isOff = true
         }
@@ -341,29 +333,17 @@ export async function filterGeneralShiftWorkers(shiftType,locationId,date,otherW
 
 function validateConstraint(constraints,workerOptions,otherWorkers){
     if (constraints.length === 0)return  workerOptions
-    const validCandidates = []
-    for (const candidate of workerOptions){
-        let hasConstraint = false;
 
-        for (const worker of otherWorkers){
-            for (const constraint of constraints){
-                const worker1 = constraint.worker1_id
-                const worker2 = constraint.worker2_id
+    const validCandidates = workerOptions.filter(candidate => {
+        const hasConflict = otherWorkers.some(worker => 
+            constraints.some(cons =>
+            (cons.worker1_id === candidate.id && cons.worker2_id === worker.id) ||
+            (cons.worker2_id === candidate.id && cons.worker1_id === worker.id)
+            )
+        )
 
-                if (
-                    (worker1 === candidate.id && worker2 === worker.id) || 
-                    (worker2 === candidate.id && worker1 === worker.id)
-                ){
-                    hasConstraint = true
-                    break
-                }
-
-            }
-            if (hasConstraint)break
-        }
-
-        if (!hasConstraint) validCandidates.push(candidate)
-    }
+        return !hasConflict
+    })
 
     return validCandidates
 }
@@ -486,12 +466,13 @@ export async function setNewDayWorker(newWorkerShift,newWorker,oldWorker){
             afternoonShiftContainer.appendChild(afternoonWorkerShift)
 
             const nightWorkerContainer = document.getElementById(nightWorkerId)
-            const nightWorkerData = nightWorkerContainer.getElementsByClassName("workerInfo")
-            const nightWorkerShift = nightWorkerContainer.getElementsByClassName("shiftType")
+            const nightWorkerData = nightWorkerContainer.getElementsByClassName("workerInfo")[0]
+            const nightWorkerShift = nightWorkerContainer.getElementsByClassName("shiftType")[0]
             const nightCoworker = nightWorkerContainer.closest(".workerContainer")
             const nightCoworkerId = parseInt(nightCoworker.getAttribute("workerid"))
 
-            const availableNightWorkers = await filterGeneralShiftWorkers("10pm-6am",locationId,date,otherWorkers,nightCoworkerId)
+            const availableNightWorkersResults = await filterGeneralShiftWorkers("10pm-6am",locationId,date,otherWorkers,nightCoworkerId)
+            const availableNightWorkers = availableNightWorkersResults.filter(worker => worker.id !== newAfternoonWorker.id)
             const randomIndex2 = Math.floor(Math.random() * availableNightWorkers.length)
             const newNightWorker = availableNightWorkers[randomIndex2]
 
@@ -503,17 +484,20 @@ export async function setNewDayWorker(newWorkerShift,newWorker,oldWorker){
 }
 
 export async function setNewAfternoonWorker(newWorker,oldWorker){
-    const locationId = oldWorker.getAttribute("locationid")
-    const dayNumber = oldWorker.getAttribute("day")
-    const currentWorkerId = oldWorker.getAttribute("workerid")
+    // const locationId = oldWorker.getAttribute("locationid")
+    // const dayNumber = oldWorker.getAttribute("day")
+    // const currentWorkerId = oldWorker.getAttribute("workerid")
 
-    const otherWorkersDivs = document.getElementsByClassName(`${dayNumber}-${locationId}-worker`)
-    const otherWorkers = []
+    // const otherWorkersDivs = document.getElementsByClassName(`${dayNumber}-${locationId}-worker`)
 
-    for (const div of otherWorkersDivs){
-        const workerId = div.getAttribute("workerid")
-        if (workerId && workerId !== currentWorkerId)otherWorkers.push(workerId)
-    }
+    // const otherWorkers = Array.from(otherWorkersDivs)
+    //     .map(div => div.getAttribute("workerid"))
+    //     .filter(workerId => workerId && workerId !== currentWorkerId)
+
+    // for (const div of otherWorkersDivs){
+    //     const workerId = div.getAttribute("workerid")
+    //     if (workerId && workerId !== currentWorkerId)otherWorkers.push(workerId)
+    // }
 
     const workerSpan = oldWorker.getElementsByClassName("workerInfo")[0]
 
@@ -543,7 +527,7 @@ export async function setNewNightWorker(newWorkerShift,newWorker,oldWorker){
     const shiftSpan = oldWorker.getElementsByClassName("shiftType")[0]
 
     if (oldWorkerShift === "10pm-6am"){
-        if (newWorkerShift === "10pm-26am"){
+        if (newWorkerShift === "10pm-6am"){
             workerSpan.innerText = `${newWorker.first_name[0]}.${newWorker.last_name}`
             shiftSpan.innerText = `(${newWorkerShift})`
             oldWorker.setAttribute("workerid",newWorker.id)
@@ -654,4 +638,3 @@ export async function setNewNightWorker(newWorkerShift,newWorker,oldWorker){
         }
     }
 }
-

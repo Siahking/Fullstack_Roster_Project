@@ -271,13 +271,9 @@ export async function adjustEditDiv(event){
     const [month,year] = oldWorker.getAttribute("monthyear").split("-")
     const date = `${year}-${month}-${dayNumber}`
 
-    const otherWorkersDivs = document.getElementsByClassName(`${dayNumber}-${locationId}-worker`)
-    const otherWorkers = []
-
-    for (const div of otherWorkersDivs){
-        const workerId = div.getAttribute("workerid")
-        if (workerId && workerId !== currentWorkerId)otherWorkers.push(workerId)
-    }
+    const otherWorkers = Array.from(document.getElementsByClassName(`${dayNumber}-${locationId}-worker`))
+        .map(div => div.getAttribute("workerid"))
+        .filter(workerId => workerId && workerId !== currentWorkerId);
 
     if (!oldWorker)return;
 
