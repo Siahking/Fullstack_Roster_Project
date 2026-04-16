@@ -164,6 +164,7 @@ export async function generateCalender(month,year){
         for (let day = 1; day <= daysInMonth; day++) {
             const dayCell = document.createElement("div");
             dayCell.className = "calendar-item calendar-day";
+            dayCell.setAttribute("id",`${location.id}-day-${day}`)
 
             // Create a span for the day number (top-right corner)
             const dayNumber = document.createElement("span");
@@ -270,7 +271,17 @@ export async function adjustEditDiv(event){
     const shiftType = oldWorker.getAttribute("shifttype")
     const [month,year] = oldWorker.getAttribute("monthyear").split("-")
     const date = `${year}-${month}-${dayNumber}`
+    const dayCell = document.getElementById(`${locationId}-day-${dayNumber}`)
+    const dateWorkersCells = Array.from(dayCell.querySelectorAll(".workerContainer"))
 
+    const dateWorkers = {}
+    for (const value of ["6am-6pm","6am-2pm","2pm-10pm","10pm-6am","6pm-6am"]){
+        dateWorkers[value] = dateWorkersCells
+        .filter(cell => cell.getAttribute("shifttype") === value)
+        .map(cell => cell.getAttribute("workerid"))
+        .filter(id => id !== null)
+    }
+    
     const otherWorkers = Array.from(document.getElementsByClassName(`${dayNumber}-${locationId}-worker`))
         .map(div => div.getAttribute("workerid"))
         .filter(workerId => workerId && workerId !== currentWorkerId);
@@ -282,6 +293,7 @@ export async function adjustEditDiv(event){
     dropDownContainer.classList.add("dropDownContainer")
 
     const paramsObject = {
+        dateWorkers:dateWorkers,
         oldWorker:oldWorker,
         oldWorkerContainer:oldWorkerContainer,
         workerId:currentWorkerId,
@@ -358,12 +370,14 @@ async function selectWorker(paramObject){
         coworker = document.getElementById(oldWorkerDivId.slice(0,-1) + "1")
     }
 
+    const coworkerId = coworker ? coworker.getAttribute("workerid") : null
+
     let workerSelect = document.getElementById("worker-select")
     if (workerSelect){
         workerSelect.parentNode.removeChild(workerSelect)
     }
 
-    const availableWorkers = await filterWorkers(workerId,selectedShift,locationId,date,otherWorkers,coworker)
+    const availableWorkers = await filterWorkers(workerId,selectedShift,locationId,date,otherWorkers,[coworkerId,workerId])
 
     workerSelect = document.createElement("select")
     workerSelect.id = "worker-select"
