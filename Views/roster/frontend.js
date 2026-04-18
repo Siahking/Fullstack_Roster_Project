@@ -377,7 +377,11 @@ async function selectWorker(paramObject){
         workerSelect.parentNode.removeChild(workerSelect)
     }
 
-    const availableWorkers = await filterWorkers(workerId,selectedShift,locationId,date,otherWorkers,[coworkerId,workerId])
+
+
+    console.log(otherWorkers)
+    console.log([coworkerId,workerId])
+    const availableWorkers = await filterWorkers(workerId,selectedShift,locationId,date,otherWorkers,paramObject.dateWorkers)
 
     workerSelect = document.createElement("select")
     workerSelect.id = "worker-select"

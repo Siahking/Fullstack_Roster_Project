@@ -249,12 +249,19 @@ function setupEditBtn(id,container){
     container.appendChild(editBtn)
 }
 
-export async function filterWorkers(workerId,shiftType,locationId,date,otherWorkers,workersToExclude){
+export async function filterWorkers(workerId,shiftType,locationId,date,otherWorkers,allWorkersObj){
     const [year,month,day] = date.split('-')
     const dayName = new Date(date).toLocaleDateString("en-US", { weekday: "long" })
+    const shiftConflicts = {
+        "6am-2pm":  ["6am-2pm", "6am-6pm"],
+        "6am-6pm":  ["6am-6pm", "6am-2pm", "2pm-10pm"],
+        "2pm-10pm": ["2pm-10pm", "6am-6pm", "6pm-6am"],
+        "6pm-6am":  ["6pm-6am", "10pm-6am", "2pm-10pm"],
+        "10pm-6am": ["10pm-6am", "6pm-6am"]
+    };
 
-    // let coworkerId = null
-    // if(coworker)coworkerId = coworker.getAttribute("workerid")
+    const relevantShifts = shiftConflicts[shiftType] || []
+    const workersToExclude = relevantShifts.flatMap(shift => allWorkersObj[shift] || [])
 
     let excludedWorkers = []
 
@@ -272,7 +279,7 @@ export async function filterWorkers(workerId,shiftType,locationId,date,otherWork
         const isAvailable = worker["hours"].includes(shiftType) || worker["hours"].includes("24hrs")
         if (!isAvailable)return false
 
-        if (workersToExclude.some(id => id === worker.id))return false
+        if (workersToExclude.some(id => parseInt(id) === worker.id))return false
 
         if (worker.id == workerId)return false
 
@@ -283,13 +290,19 @@ export async function filterWorkers(workerId,shiftType,locationId,date,otherWork
 
         return true
     })
-
     return validateConstraint(constraints,workerOptions,otherWorkers)
 }
 
 export async function filterGeneralShiftWorkers(shiftType,locationId,date,otherWorkers,optionalWorkers=[]) {
+    console.log("passed here for shift ",shiftType)
+    const shiftConflicts = {
+        "6am-2pm":  ["6am-2pm", "6am-6pm"],
+        "6am-6pm":  ["6am-6pm", "6am-2pm", "2pm-10pm"],
+        "2pm-10pm": ["2pm-10pm", "6am-6pm", "6pm-6am"],
+        "6pm-6am":  ["6pm-6am", "10pm-6am", "2pm-10pm"],
+        "10pm-6am": ["10pm-6am", "6pm-6am"]
+    };
     const [year, month, day] = date.split("-")
-
     const dayCell = document.getElementById(`${locationId}-day-${day}`)
     const dateWorkersCells = Array.from(dayCell.querySelectorAll(".workerContainer"))
 
@@ -301,6 +314,9 @@ export async function filterGeneralShiftWorkers(shiftType,locationId,date,otherW
         .filter(id => id !== null)
     }
 
+    const relevantShifts = shiftConflicts[shiftType] || []
+    const workersToExclude = relevantShifts.flatMap(shift => dateWorkers[shift] || [])
+
     const workers = await apiFuncs.retrieveWorkerOrLocations("location_id", locationId)
     const shiftWorkers = []
     const availableWorkers = []
@@ -310,12 +326,14 @@ export async function filterGeneralShiftWorkers(shiftType,locationId,date,otherW
         
         if (!worker["hours"].includes(shiftType))continue
 
-        if (shiftType === "6am-6pm" || shiftType === "6pm-6am"){
-            if (dateWorkers["2pm-10pm"].some(id => id === worker.id))continue
-        }else if (shiftType === "2pm-10pm"){
-            if (dateWorkers["6am-6pm"].some(id => id === worker.id) ||
-                dateWorkers["6pm-6am"].some(id => id === worker.id)) continue
-        }
+        // if (shiftType === "6am-6pm" || shiftType === "6pm-6am"){
+        //     if (dateWorkers["2pm-10pm"].some(id => id === worker.id))continue
+        // }else if (shiftType === "2pm-10pm"){
+        //     if (dateWorkers["6am-6pm"].some(id => id === worker.id) ||
+        //         dateWorkers["6pm-6am"].some(id => id === worker.id)) continue
+        // }
+
+        if (workersToExclude.some(id => parseInt(id) === worker.id))continue
         
         const daysOff = await apiFuncs.getDaysOff("worker_id",worker.id)
         let isOff = false
@@ -347,6 +365,9 @@ export async function filterGeneralShiftWorkers(shiftType,locationId,date,otherW
         if (constraintFound)continue
         availableWorkers.push(option)
     }
+
+    console.log("passed here")
+    console.log(availableWorkers)
 
     return availableWorkers
 }
@@ -453,6 +474,8 @@ export async function setNewDayWorker(newWorkerShift,newWorker,oldWorker){
             }else{
                 availableAfternoonWorkers = await filterGeneralShiftWorkers("2pm-10pm",locationId,date,otherWorkers,[newWorker.id])
             }
+
+            console.log(availableAfternoonWorkers)
             
             const randomIndex = Math.floor(Math.random() * availableAfternoonWorkers.length)       
             const newAfternoonWorker = availableAfternoonWorkers[randomIndex]
@@ -477,8 +500,6 @@ export async function setNewDayWorker(newWorkerShift,newWorker,oldWorker){
             afternoonWorkerShift.classList.add("workerContainer")
             afternoonWorkerShift.classList.add(`${dayNumber}-${location}-worker`)
 
-            console.log(afternoonWorkerShift)
-
             container.appendChild(workerData)
             container.appendChild(shiftData)
             setupEditBtn(buttonId,container)
@@ -489,13 +510,14 @@ export async function setNewDayWorker(newWorkerShift,newWorker,oldWorker){
             const nightWorkerContainer = document.getElementById(nightWorkerId)
             const nightWorkerData = nightWorkerContainer.getElementsByClassName("workerInfo")[0]
             const nightWorkerShift = nightWorkerContainer.getElementsByClassName("shiftType")[0]
-            const nightCoworker = nightWorkerContainer.closest(".workerContainer")
-            const nightCoworkerId = parseInt(nightCoworker.getAttribute("workerid"))
+            // const nightCoworker = nightWorkerContainer.closest(".workerContainer")
+            // const nightCoworkerId = parseInt(nightCoworker.getAttribute("workerid"))
 
-            const availableNightWorkersResults = await filterGeneralShiftWorkers("10pm-6am",locationId,date,otherWorkers,[nightCoworkerId,newAfternoonWorker.id])
-            const availableNightWorkers = availableNightWorkersResults.filter(worker => worker.id !== newAfternoonWorker.id)
-            const randomIndex2 = Math.floor(Math.random() * availableNightWorkers.length)
-            const newNightWorker = availableNightWorkers[randomIndex2]
+            const availableNightWorkersResults = await filterGeneralShiftWorkers("10pm-6am",locationId,date,otherWorkers)
+            // const availableNightWorkers = availableNightWorkersResults.filter(worker => worker.id !== newAfternoonWorker.id)
+            const randomIndex2 = Math.floor(Math.random() * availableNightWorkersResults.length)
+            const newNightWorker = availableNightWorkersResults[randomIndex2]
+            console.log(newNightWorker)
 
             nightWorkerData.innerText = `${newNightWorker.first_name[0]}.${newNightWorker.last_name}`
             nightWorkerShift.innerText = "(10pm-6am)"
@@ -575,6 +597,8 @@ export async function setNewNightWorker(newWorkerShift,newWorker,oldWorker){
             const dayWorkerSpan = dayWorkerShift.getElementsByClassName("workerInfo")[0]
             const dayShiftSpan = dayWorkerShift.getElementsByClassName("shiftType")[0]
 
+            console.log(dayWorkerSpan)
+
             let availableWorkers = await filterGeneralShiftWorkers(newWorkerShift,locationId,date,otherWorkers,dayCoworkerId)
             const randomIndex = Math.floor(Math.random() * availableWorkers.length)       
             const newNightWorker = availableWorkers[randomIndex]
@@ -652,6 +676,8 @@ export async function setNewNightWorker(newWorkerShift,newWorker,oldWorker){
             const availableDayWorkers = await filterGeneralShiftWorkers("10pm-6am",locationId,date,otherWorkers,dayCoworkerId)
             const randomIndex2 = Math.floor(Math.random() * availableDayWorkers.length)
             const newDayWorker = availableDayWorkers[randomIndex2]
+            console.log(availableDayWorkers)
+            console.log(newDayWorker)
 
             dayWorkerData.innerText = `${newDayWorker.first_name[0]}.${newDayWorker.last_name}`
             dayWorkerShift.innerText = "(10pm-6am)"
