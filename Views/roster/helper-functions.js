@@ -205,6 +205,10 @@ export function dateToString(day,month,year){
 
 export async function setWorkerForShift(workerArray,date,shiftWorkersArray,constraints){
     while(true){
+        if (workerArray.length === 0){
+            console.log("Array is empty")
+            return
+        }
         const worker = workerArray.pop()
         const result = await apiFuncs.createOccupancy(worker.id,date,"Work") 
         if (!objectCheck(result)){
@@ -294,7 +298,6 @@ export async function filterWorkers(workerId,shiftType,locationId,date,otherWork
 }
 
 export async function filterGeneralShiftWorkers(shiftType,locationId,date,otherWorkers,optionalWorkers=[]) {
-    console.log("passed here for shift ",shiftType)
     const shiftConflicts = {
         "6am-2pm":  ["6am-2pm", "6am-6pm"],
         "6am-6pm":  ["6am-6pm", "6am-2pm", "2pm-10pm"],
@@ -325,13 +328,6 @@ export async function filterGeneralShiftWorkers(shiftType,locationId,date,otherW
         if (Array.isArray(optionalWorkers) && optionalWorkers.some(id => id === worker.id))continue
         
         if (!worker["hours"].includes(shiftType))continue
-
-        // if (shiftType === "6am-6pm" || shiftType === "6pm-6am"){
-        //     if (dateWorkers["2pm-10pm"].some(id => id === worker.id))continue
-        // }else if (shiftType === "2pm-10pm"){
-        //     if (dateWorkers["6am-6pm"].some(id => id === worker.id) ||
-        //         dateWorkers["6pm-6am"].some(id => id === worker.id)) continue
-        // }
 
         if (workersToExclude.some(id => parseInt(id) === worker.id))continue
         
@@ -365,9 +361,6 @@ export async function filterGeneralShiftWorkers(shiftType,locationId,date,otherW
         if (constraintFound)continue
         availableWorkers.push(option)
     }
-
-    console.log("passed here")
-    console.log(availableWorkers)
 
     return availableWorkers
 }
@@ -438,6 +431,7 @@ export async function setNewDayWorker(newWorkerShift,newWorker,oldWorker){
             const nightShiftSpan = nightWorkerShift.getElementsByClassName("shiftType")[0]
 
             let availableWorkers = await filterGeneralShiftWorkers(newWorkerShift,locationId,date,otherWorkers,nightCoworkerId)
+            if (availableWorkers.length === 0)console.log("empty array found")
             const randomIndex = Math.floor(Math.random() * availableWorkers.length)       
             const newNightWorker = availableWorkers[randomIndex]
             
@@ -471,11 +465,11 @@ export async function setNewDayWorker(newWorkerShift,newWorker,oldWorker){
                 const afternoonCoworker = shiftCheck[0]
                 const afternoonCoworkerId = parseInt(afternoonCoworker.getAttribute("workerid"))
                 availableAfternoonWorkers = await filterGeneralShiftWorkers("2pm-10pm",locationId,date,otherWorkers,[afternoonCoworkerId,newWorker.id])
+                if (availableAfternoonWorkers.length === 0)console.log("empty array found")
             }else{
                 availableAfternoonWorkers = await filterGeneralShiftWorkers("2pm-10pm",locationId,date,otherWorkers,[newWorker.id])
+                if (availableAfternoonWorkers.length === 0)console.log("empty array found")
             }
-
-            console.log(availableAfternoonWorkers)
             
             const randomIndex = Math.floor(Math.random() * availableAfternoonWorkers.length)       
             const newAfternoonWorker = availableAfternoonWorkers[randomIndex]
@@ -514,10 +508,10 @@ export async function setNewDayWorker(newWorkerShift,newWorker,oldWorker){
             // const nightCoworkerId = parseInt(nightCoworker.getAttribute("workerid"))
 
             const availableNightWorkersResults = await filterGeneralShiftWorkers("10pm-6am",locationId,date,otherWorkers)
+            if (availableNightWorkersResults.length === 0)console.log("empty array found")
             // const availableNightWorkers = availableNightWorkersResults.filter(worker => worker.id !== newAfternoonWorker.id)
             const randomIndex2 = Math.floor(Math.random() * availableNightWorkersResults.length)
             const newNightWorker = availableNightWorkersResults[randomIndex2]
-            console.log(newNightWorker)
 
             nightWorkerData.innerText = `${newNightWorker.first_name[0]}.${newNightWorker.last_name}`
             nightWorkerShift.innerText = "(10pm-6am)"
@@ -527,20 +521,20 @@ export async function setNewDayWorker(newWorkerShift,newWorker,oldWorker){
 }
 
 export async function setNewAfternoonWorker(newWorker,oldWorker){
-    // const locationId = oldWorker.getAttribute("locationid")
-    // const dayNumber = oldWorker.getAttribute("day")
-    // const currentWorkerId = oldWorker.getAttribute("workerid")
+    const locationId = oldWorker.getAttribute("locationid")
+    const dayNumber = oldWorker.getAttribute("day")
+    const currentWorkerId = oldWorker.getAttribute("workerid")
 
-    // const otherWorkersDivs = document.getElementsByClassName(`${dayNumber}-${locationId}-worker`)
+    const otherWorkersDivs = document.getElementsByClassName(`${dayNumber}-${locationId}-worker`)
 
-    // const otherWorkers = Array.from(otherWorkersDivs)
-    //     .map(div => div.getAttribute("workerid"))
-    //     .filter(workerId => workerId && workerId !== currentWorkerId)
+    const otherWorkers = Array.from(otherWorkersDivs)
+        .map(div => div.getAttribute("workerid"))
+        .filter(workerId => workerId && workerId !== currentWorkerId)
 
-    // for (const div of otherWorkersDivs){
-    //     const workerId = div.getAttribute("workerid")
-    //     if (workerId && workerId !== currentWorkerId)otherWorkers.push(workerId)
-    // }
+    for (const div of otherWorkersDivs){
+        const workerId = div.getAttribute("workerid")
+        if (workerId && workerId !== currentWorkerId)otherWorkers.push(workerId)
+    }
 
     const workerSpan = oldWorker.getElementsByClassName("workerInfo")[0]
 
@@ -597,9 +591,8 @@ export async function setNewNightWorker(newWorkerShift,newWorker,oldWorker){
             const dayWorkerSpan = dayWorkerShift.getElementsByClassName("workerInfo")[0]
             const dayShiftSpan = dayWorkerShift.getElementsByClassName("shiftType")[0]
 
-            console.log(dayWorkerSpan)
-
             let availableWorkers = await filterGeneralShiftWorkers(newWorkerShift,locationId,date,otherWorkers,dayCoworkerId)
+                if (availableWorkers.length === 0)console.log("empty array found")
             const randomIndex = Math.floor(Math.random() * availableWorkers.length)       
             const newNightWorker = availableWorkers[randomIndex]
             
@@ -633,8 +626,10 @@ export async function setNewNightWorker(newWorkerShift,newWorker,oldWorker){
                 const afternoonCoworker = shiftCheck[0]
                 const afternoonCoworkerId = parseInt(afternoonCoworker.getAttribute("workerid"))
                 availableAfternoonWorkers = await filterGeneralShiftWorkers("2pm-10pm",locationId,date,otherWorkers,afternoonCoworkerId)
+                if (availableAfternoonWorkers.length === 0)console.log("empty array found")
             }else{
                 availableAfternoonWorkers = await filterGeneralShiftWorkers("2pm-10pm",locationId,date,otherWorkers)
+                if (availableAfternoonWorkers.length === 0)console.log("empty array found")
             }
             
             const randomIndex = Math.floor(Math.random() * availableAfternoonWorkers.length)       
@@ -674,10 +669,9 @@ export async function setNewNightWorker(newWorkerShift,newWorker,oldWorker){
             const dayCoworkerId = parseInt(dayCoworker.getAttribute("workerid"))
 
             const availableDayWorkers = await filterGeneralShiftWorkers("10pm-6am",locationId,date,otherWorkers,dayCoworkerId)
+            if (availableDayWorkers.length === 0)console.log("empty array found")
             const randomIndex2 = Math.floor(Math.random() * availableDayWorkers.length)
             const newDayWorker = availableDayWorkers[randomIndex2]
-            console.log(availableDayWorkers)
-            console.log(newDayWorker)
 
             dayWorkerData.innerText = `${newDayWorker.first_name[0]}.${newDayWorker.last_name}`
             dayWorkerShift.innerText = "(10pm-6am)"

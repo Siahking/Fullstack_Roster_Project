@@ -377,39 +377,63 @@ async function selectWorker(paramObject){
         workerSelect.parentNode.removeChild(workerSelect)
     }
 
-
-
-    console.log(otherWorkers)
-    console.log([coworkerId,workerId])
     const availableWorkers = await filterWorkers(workerId,selectedShift,locationId,date,otherWorkers,paramObject.dateWorkers)
 
-    workerSelect = document.createElement("select")
-    workerSelect.id = "worker-select"
+    let selectedWorkerId = null
 
-    const placeholder = document.createElement("option");
-    placeholder.textContent = "Select Worker to exchange with:";
-    placeholder.disabled = true;
-    placeholder.selected = true;
-    placeholder.value = "";
-    workerSelect.appendChild(placeholder);
+    const customSelect = document.createElement("div")
+    customSelect.classList.add("custom-select")
+
+    const selectedDisplay = document.createElement("div")
+    selectedDisplay.classList.add("selected")
+    selectedDisplay.textContent = "Select Worker to exchange with:"
+
+    const optionsContainer = document.createElement("div")
+    optionsContainer.classList.add("options")
+    optionsContainer.style.display = "none"
+
+    selectedDisplay.addEventListener("click", () => {
+        optionsContainer.style.display = 
+            optionsContainer.style.display === "none" ? "block" : "none"
+    })
 
     for (const worker of availableWorkers){
-        const option = document.createElement("option")
-        option.value = worker.id
-        option.textContent = `${worker.first_name[0]}.${worker.last_name}`
-        workerSelect.appendChild(option)
+        const option = document.createElement("div")
+        option.classList.add("select-worker-option")
+
+        const nameSpan = document.createElement("span")
+        nameSpan.classList.add("worker-span")
+        nameSpan.textContent = `${worker.first_name[0]}.${worker.last_name}`
+
+        const shiftSpan = document.createElement("span")
+        shiftSpan.classList.add("shift-span")
+        shiftSpan.textContent = ` (${[...worker.hours]})`
+
+        option.appendChild(nameSpan)
+        option.appendChild(shiftSpan)
+
+        option.addEventListener("click", () => {
+            selectedWorkerId = worker.id
+            selectedDisplay.textContent = option.textContent
+            optionsContainer.style.display = "none"
+        })
+
+        optionsContainer.appendChild(option)
     }
 
     let selectorContainer = document.getElementById("selectorContainer")
     if(!selectorContainer){
         selectorContainer = document.createElement("div")
         selectorContainer.setAttribute("id","selectorContainer")
-        selectorContainer.appendChild(workerSelect)
+        selectorContainer.appendChild(customSelect)
         dropDownContainer.appendChild(selectorContainer)
     }else{
         selectorContainer.innerHTML = ""
-        selectorContainer.appendChild(workerSelect)
+        selectorContainer.appendChild(customSelect)
     }
+
+    customSelect.appendChild(selectedDisplay)
+    customSelect.appendChild(optionsContainer)
 
     let submitBtn = document.getElementById("submitBtn")
     if (!submitBtn){
@@ -417,7 +441,9 @@ async function selectWorker(paramObject){
         submitBtn.textContent = "Done"
         submitBtn.setAttribute("id","submitBtn")
         submitBtn.addEventListener("click",async ()=>{
-            const selectedWorker = document.getElementById("worker-select").value
+            // const selectedWorker = document.getElementById("worker-select").value
+            if (!selectWorker)return alert("Please select a worker")
+            const selectedWorker = selectedWorkerId
             const newWorker = await apiFuncs.findWorker("","","","",selectedWorker)
             funcs.resetShifts(newWorker[0],selectedShift,oldWorker)
             paramObject.dropDownContainer.parentNode.removeChild(paramObject.dropDownContainer)
