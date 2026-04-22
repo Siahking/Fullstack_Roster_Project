@@ -223,3 +223,9 @@ span{
     margin-top: 2px;
     font-weight: bold;
 }
+
+.select-worker-option span{
+    display:flex;
+    justify-content: center;
+    align-content: center;
+}
