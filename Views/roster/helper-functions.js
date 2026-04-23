@@ -264,6 +264,8 @@ export async function filterWorkers(workerId,shiftType,locationId,date,otherWork
         "10pm-6am": ["10pm-6am", "6pm-6am"]
     };
 
+    console.log(allWorkersObj)
+
     const relevantShifts = shiftConflicts[shiftType] || []
     const workersToExclude = relevantShifts.flatMap(shift => allWorkersObj[shift] || [])
 
@@ -294,6 +296,8 @@ export async function filterWorkers(workerId,shiftType,locationId,date,otherWork
 
         return true
     })
+
+    console.log(workerOptions)
     return validateConstraint(constraints,workerOptions,otherWorkers)
 }
 
@@ -304,7 +308,7 @@ export async function filterGeneralShiftWorkers(shiftType,locationId,date,otherW
         "2pm-10pm": ["2pm-10pm", "6am-6pm", "6pm-6am"],
         "6pm-6am":  ["6pm-6am", "10pm-6am", "2pm-10pm"],
         "10pm-6am": ["10pm-6am", "6pm-6am"]
-    };
+    }
     const [year, month, day] = date.split("-")
     const dayCell = document.getElementById(`${locationId}-day-${day}`)
     const dateWorkersCells = Array.from(dayCell.querySelectorAll(".workerContainer"))
@@ -424,6 +428,7 @@ export async function setNewDayWorker(newWorkerShift,newWorker,oldWorker){
 
             workerSpan.innerText = `${newWorker.first_name[0]}.${newWorker.last_name}`
             shiftSpan.innerText = `(${newWorkerShift})`
+            oldWorker.setAttribute("shifttype","6am-6pm")
             
             afternoonWorkerShift.parentNode.removeChild(afternoonWorkerShift)
 
@@ -455,6 +460,7 @@ export async function setNewDayWorker(newWorkerShift,newWorker,oldWorker){
         }else{
             workerSpan.innerText = `${newWorker.first_name[0]}.${newWorker.last_name}`
             shiftSpan.innerText = `(${newWorkerShift})`
+            oldWorker.setAttribute("shifttype","6am-2pm")
 
             let buttonId
             const oldWorkerId = oldWorker.getAttribute("id")
@@ -484,20 +490,16 @@ export async function setNewDayWorker(newWorkerShift,newWorker,oldWorker){
             const workerData = document.createElement("span")
             const shiftData = document.createElement("span")
 
-
             if (newAfternoonWorker){
                 workerData.innerText = `${newAfternoonWorker.first_name[0]}.${newAfternoonWorker.last_name}`
                 shiftData.innerText = "(2pm-10pm)"
-
                 afternoonWorkerShift.setAttribute("workerid",newAfternoonWorker.id)
                 
             }else{
                 workerData.innerText = "No worker Available"
                 shiftData.innerText = "-"
-
                 afternoonWorkerShift.setAttribute("workerid",null)
             }
-
             workerData.setAttribute("id",`${locationName}-${dayNumber}-afternoon-worker`)
             workerData.classList.add("workerInfo")
             shiftData.setAttribute("id",`${locationName}-${dayNumber}-afternoon-worker`)
@@ -524,10 +526,10 @@ export async function setNewDayWorker(newWorkerShift,newWorker,oldWorker){
             // const nightCoworkerId = parseInt(nightCoworker.getAttribute("workerid"))
 
             const availableNightWorkersResults = await filterGeneralShiftWorkers("10pm-6am",locationId,date,otherWorkers)
-            if (availableNightWorkersResults.length === 0)console.log("empty array found")
             // const availableNightWorkers = availableNightWorkersResults.filter(worker => worker.id !== newAfternoonWorker.id)
             const randomIndex2 = Math.floor(Math.random() * availableNightWorkersResults.length)
             const newNightWorker = availableNightWorkersResults[randomIndex2]
+            nightWorkerContainer.setAttribute("shifttype","10pm-6am")
 
             if (newNightWorker){
                 nightWorkerData.innerText = `${newNightWorker.first_name[0]}.${newNightWorker.last_name}`
@@ -537,8 +539,7 @@ export async function setNewDayWorker(newWorkerShift,newWorker,oldWorker){
                 nightWorkerData.innerText = "No worker Available"
                 nightWorkerShift.innerText = "-"
                 nightWorkerContainer.setAttribute("workerid",null)
-            }
-            
+            }   
         }
     }
 }
@@ -608,6 +609,7 @@ export async function setNewNightWorker(newWorkerShift,newWorker,oldWorker){
 
             workerSpan.innerText = `${newWorker.first_name[0]}.${newWorker.last_name}`
             shiftSpan.innerText = `(${newWorkerShift})`
+            oldWorker.setAttribute("shifttype","6am-6pm")
             
             afternoonWorkerShift.parentNode.removeChild(afternoonWorkerShift)
 
@@ -628,7 +630,6 @@ export async function setNewNightWorker(newWorkerShift,newWorker,oldWorker){
                 dayShiftSpan.innerText = "-"
                 dayWorkerShift.setAttribute("workerid",null)
             }
-            
             dayWorkerShift.setAttribute("shifttype","6am-6pm")
         }
     }else{ //old worker shift is 6am-6pm
@@ -639,6 +640,7 @@ export async function setNewNightWorker(newWorkerShift,newWorker,oldWorker){
         }else{
             workerSpan.innerText = `${newWorker.first_name[0]}.${newWorker.last_name}`
             shiftSpan.innerText = `(${newWorkerShift})`
+            oldWorker.setAttribute("shifttype","10pm-6am")
 
             let buttonId
             const oldWorkerId = oldWorker.getAttribute("id")

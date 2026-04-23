@@ -311,6 +311,18 @@ export async function adjustEditDiv(event){
     dropDownContainer.style.left = `${window.scrollX + rect.left}px`;
 
     document.body.appendChild(dropDownContainer)
+    setTimeout(() => {
+        function handleClickOutside(e) {
+            if (!dropDownContainer.contains(e.target)) {
+                if (dropDownContainer.parentNode) {
+                    dropDownContainer.parentNode.removeChild(dropDownContainer)
+                }
+                document.removeEventListener("click", handleClickOutside)
+            }
+        }
+
+        document.addEventListener("click", handleClickOutside)
+    }, 0)
 }
 
 function selectShift(paramObject){
@@ -416,6 +428,7 @@ async function selectWorker(paramObject){
             selectedWorkerId = worker.id
             selectedDisplay.textContent = option.textContent
             optionsContainer.style.display = "none"
+            console.log("clicked")
         })
 
         optionsContainer.appendChild(option)
@@ -442,7 +455,7 @@ async function selectWorker(paramObject){
         submitBtn.setAttribute("id","submitBtn")
         submitBtn.addEventListener("click",async ()=>{
             // const selectedWorker = document.getElementById("worker-select").value
-            if (!selectWorker)return alert("Please select a worker")
+            if (!selectedWorkerId)return alert("Please select a worker")
             const selectedWorker = selectedWorkerId
             const newWorker = await apiFuncs.findWorker("","","","",selectedWorker)
             funcs.resetShifts(newWorker[0],selectedShift,oldWorker)
