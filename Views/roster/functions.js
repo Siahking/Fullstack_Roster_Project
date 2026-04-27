@@ -191,3 +191,21 @@ export function resetShifts(newWorker,newWorkerShift,oldWorker){
         helperFuncs.setNewNightWorker(newWorkerShift,newWorker,oldWorker)
     }
 }
+
+export function downloadRosterPdf(containerId,locationName,month,year){
+    const container = document.getElementById(containerId)
+
+    const options = {
+        margin: 0.5,
+        filename: `${locationName}-${month}-${year}-roster.pdf`,
+        image: {type: "jpeg",quality: 0.98},
+        html2canvas: {
+            scale: 2,
+            logging:true,
+            useCORS: true
+        },
+        jsPDF: { unit : "in", format: "letter", orientation: "landscape"}
+    };
+
+    html2pdf().set(options).from(container).save();
+}

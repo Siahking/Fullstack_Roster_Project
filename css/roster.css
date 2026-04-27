@@ -83,7 +83,7 @@
 #save-roster-container,.success-container{
     min-width: 1000px;
     display: flex;
-    justify-content: center;
+    justify-content:center;
 }
 
 .shift-block p {
@@ -129,6 +129,7 @@ li{
     padding: 10px;
     cursor: pointer;
     font-size: 15px;
+    margin: 10px;
 }
 
 span{

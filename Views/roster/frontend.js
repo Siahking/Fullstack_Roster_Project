@@ -75,6 +75,9 @@ export async function generateCalender(month,year){
     const locationFragment = document.createDocumentFragment();
     for (const location of locations){
         let errorFound = false
+        const rosterWrapper = document.createElement("div")
+        rosterWrapper.setAttribute("id",`roster-container-${location.id}`)
+
         const WORKERS = await apiFuncs.retrieveWorkerOrLocations("location_id",location.id)
         const headerContainer = document.createElement("div")
         headerContainer.classList.add("location-header-div")
@@ -85,9 +88,24 @@ export async function generateCalender(month,year){
         locationErrorTag.classList.add("error-tag")
 
         const saveRosterBtn = document.createElement("button")
+        const createPdfBtn = document.createElement("button")
         saveRosterBtn.innerText = `Save ${location.location} Roster`
         saveRosterBtn.setAttribute("id",location.id)
         saveRosterBtn.classList.add("green-btn")
+        createPdfBtn.innerText = `Download ${location.location} Roster`
+        createPdfBtn.setAttribute("id",`pdf-${location.id}`)
+        createPdfBtn.classList.add("green-btn")
+
+        createPdfBtn.addEventListener("click",()=>{
+            funcs.downloadRosterPdf(`roster-container-${location.id}`,location.location,month,year)
+        })
+
+        saveRosterBtn.addEventListener("click",(event)=>{
+            const locationId = event.target.id
+            const errorTagId = `location-${location.id}-error`
+            const workerDetails = document.querySelectorAll(`[name="${locationId}-workerDetails"]`)
+            saveRoster(errorTagId,locationId,workerDetails)
+        })
 
         const saveRosterContainer = document.createElement("div")
         saveRosterContainer.setAttribute("id","save-roster-container")
@@ -104,15 +122,9 @@ export async function generateCalender(month,year){
         successMessage.style.color = "green"
         successMessage.setAttribute("id",`${location.id}-message`)
         successContainer.appendChild(successMessage)
-    
-        saveRosterBtn.addEventListener("click",(event)=>{
-            const locationId = event.target.id
-            const errorTagId = `location-${location.id}-error`
-            const workerDetails = document.querySelectorAll(`[name="${locationId}-workerDetails"]`)
-            saveRoster(errorTagId,locationId,workerDetails)
-        })
 
         saveRosterContainer.appendChild(saveRosterBtn)
+        saveRosterContainer.appendChild(createPdfBtn)
 
         errorTag.setAttribute("id",`location-${location.id}-error-tag`)
         errorTag.classList.add("error-tag")
@@ -238,11 +250,13 @@ export async function generateCalender(month,year){
         calendarContainer.classList.remove("specified-hidden")
         loadingContainer.classList.add("specified-hidden")
 
-        locationFragment.appendChild(headerContainer)
-        locationFragment.appendChild(calendarContainer)
-        locationFragment.appendChild(saveRosterContainer)
-        locationFragment.appendChild(successContainer)
-        locationFragment.appendChild(errorContainer)
+        rosterWrapper.appendChild(headerContainer)
+        rosterWrapper.appendChild(calendarContainer)
+        rosterWrapper.appendChild(saveRosterContainer)
+        rosterWrapper.appendChild(successContainer)
+        rosterWrapper.appendChild(errorContainer)
+        locationFragment.appendChild(rosterWrapper)
+
         container.appendChild(locationFragment)
 
         // Scroll to the finished roster for this location.
