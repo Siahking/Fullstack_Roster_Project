@@ -230,3 +230,18 @@ span{
     justify-content: center;
     align-content: center;
 }
+
+.print-mode .calendar-container {
+    display: flex !important;
+    flex-wrap: wrap;
+}
+
+.print-mode .calendar-item {
+    width: calc(100% / 7);
+    box-sizing: border-box;
+}
+
+.print-mode .calendar-header {
+    width: calc(100% / 7);
+    font-weight: bold;
+}

@@ -192,20 +192,31 @@ export function resetShifts(newWorker,newWorkerShift,oldWorker){
     }
 }
 
-export function downloadRosterPdf(containerId,locationName,month,year){
+export function downloadRosterPdf(containerId, locationName, month, year) {
     const container = document.getElementById(containerId)
+    container.classList.add("print-mode")
 
     const options = {
-        margin: 0.5,
+        margin: 0,
         filename: `${locationName}-${month}-${year}-roster.pdf`,
-        image: {type: "jpeg",quality: 0.98},
+        image: { type: "jpeg", quality: 0.98 },
         html2canvas: {
-            scale: 2,
-            logging:true,
+            scale: 1,
             useCORS: true
         },
-        jsPDF: { unit : "in", format: "letter", orientation: "landscape"}
-    };
+        jsPDF: { 
+            unit: "in", 
+            format: "letter", 
+            orientation: "landscape"
+        },
+        pagebreak: { mode: ['avoid-all'] }
+    }
 
-    html2pdf().set(options).from(container).save();
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            html2pdf().set(options).from(container).save().then(() => {
+                container.classList.remove("print-mode")
+            })
+        }, 50)
+    })
 }
