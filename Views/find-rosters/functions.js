@@ -90,10 +90,7 @@ export async function loadRosters(){
 }
 
 async function insertWorkers(rosterId,rosterDate){
-    console.log("passed here")
-
     const rosterData = await apiFuncs.retrieveRosterEntries("",rosterId,"",rosterDate,"")
-    console.log(rosterId,rosterDate)
 
     const morningShiftBlock = document.createElement("div");
     morningShiftBlock.className = "shift-block shift-1";

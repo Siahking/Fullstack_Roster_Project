@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,7 +13,7 @@ import (
 
 type DaysOff struct {
 	BreakId   int     `json:"break_id"`
-	WorkerId  *int     `json:"worker_id"`
+	WorkerId  *int    `json:"worker_id"`
 	StartDate *string `json:"start_date"`
 	EndDate   *string `json:"end_date"`
 }
@@ -169,8 +168,8 @@ func EditDayOff(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	if err := checkDates(dayOff); err != nil{
-		c.JSON(http.StatusBadRequest, gin.H{"error":err.Error()})
+	if err := checkDates(dayOff); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -180,7 +179,7 @@ func EditDayOff(c *gin.Context, db *sql.DB) {
 			end_date = COALESCE(?, end_date)
 			WHERE break_id = ?`
 
-	result, err := db.Exec(query, dayOff.WorkerId,dayOff.StartDate,dayOff.EndDate,id)
+	result, err := db.Exec(query, dayOff.WorkerId, dayOff.StartDate, dayOff.EndDate, id)
 
 	if err != nil {
 		var errMsg string
@@ -192,8 +191,6 @@ func EditDayOff(c *gin.Context, db *sql.DB) {
 				errMsg = "End Date must be after Start Date and Start Date Must be After the End Date"
 			case 1062:
 				errMsg = "Duplicate Entry, a constraint with this ID Number already exists"
-			default:
-				fmt.Print(err)
 			}
 		} else {
 			errMsg = "Unknown error occurred"
@@ -202,40 +199,40 @@ func EditDayOff(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	rowsAffected,_ := result.RowsAffected()
-	if rowsAffected == 0{
-		c.JSON(http.StatusNotFound,gin.H{"error":"No changes made, Entry may not exist or is already up to date"})
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No changes made, Entry may not exist or is already up to date"})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Day Off modified successfully"})
 }
 
-func checkDates(dayOff DaysOff)error{
+func checkDates(dayOff DaysOff) error {
 	layout := "2006-01-02"
 	var startDate, endDate time.Time
 	var err error
 
-	if dayOff.StartDate != nil{
+	if dayOff.StartDate != nil {
 		startDate, err = time.Parse(layout, *dayOff.StartDate)
 
-		if err != nil{
+		if err != nil {
 			return errors.New(" Invalid Start Date Format")
 		}
 
-		if startDate.Before(time.Now()){
+		if startDate.Before(time.Now()) {
 			return errors.New(" Start date must be in the future")
 		}
 	}
-	if dayOff.EndDate != nil{
+	if dayOff.EndDate != nil {
 		endDate, err = time.Parse(layout, *dayOff.EndDate)
-		if err != nil{
+		if err != nil {
 			return errors.New(" Invalid End Date Format")
 		}
 
 		if dayOff.StartDate != nil && endDate.Before(startDate) {
-		return errors.New(" End Date must be after the start date")
-	}
+			return errors.New(" End Date must be after the start date")
+		}
 	}
 	return nil
 }

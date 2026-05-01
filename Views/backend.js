@@ -26,7 +26,6 @@ async function apiRequest(endpoint, method = "GET", body = null){
         return { error: error.message }
     }
 }
-
 export async function getLocations() {
     return apiRequest("locations")
 };
@@ -119,7 +118,6 @@ export async function removeEntry(id,table){
     const url = `delete/${table}/${id}`
     return apiRequest(url,"DELETE")
 }
-
 export async function linkWorkerLocations(workerId,locationId){
     const url = `assign-location/${workerId}/${locationId}`
     return apiRequest(url,"POST")
@@ -168,7 +166,6 @@ export async function removeConnections(idStr="",worker_id="",location_id=""){
     }
     return apiRequest(url,"DELETE")
 }
-
 export async function createConstraint(worker1IdStr,worker2IdStr,note=""){
     let worker1_id,worker2_id
     try{
@@ -644,10 +641,3 @@ export async function deleteAccount(account_id,username){
 
     return apiRequest(url,"DELETE")
 }
-
-// async function tester() {
-//     const result = await editLocation("moriah","miami")
-//     console.log(result)
-// }
-
-// tester()

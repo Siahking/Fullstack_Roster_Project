@@ -1,11 +1,10 @@
 package models
 
-import(
-	"log"
+import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/mysql"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-
+	"log"
 )
 
 func RunMigrations(dsn string) {
@@ -13,7 +12,7 @@ func RunMigrations(dsn string) {
 		"file://migrations",
 		"mysql://"+dsn,
 	)
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 

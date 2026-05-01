@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -71,7 +70,7 @@ func FindConstraint(c *gin.Context, db *sql.DB) {
 	worker1LastName := c.Query("worker1_lastname")
 	worker2FirstName := c.Query("worker2_firstname")
 	worker2LastName := c.Query("worker2_lastname")
-	baseString1 := 	`SELECT wc.id,w1.first_name AS worker1_firstname,w1.last_name AS worker1_lastname,w2.first_name AS worker2_firstname,
+	baseString1 := `SELECT wc.id,w1.first_name AS worker1_firstname,w1.last_name AS worker1_lastname,w2.first_name AS worker2_firstname,
 					w2.last_name AS worker2_lastname,wc.note AS note 
 					FROM worker_constraints wc 
 					JOIN workers w1 ON wc.worker1_id = w1.id
@@ -79,20 +78,20 @@ func FindConstraint(c *gin.Context, db *sql.DB) {
 					WHERE`
 	baseString2 := "SELECT * FROM worker_constraints"
 
-	if idStr == ""{
+	if idStr == "" {
 		id = 0
-	}else{
-		id,err = strconv.Atoi(idStr)
-		if err != nil{
+	} else {
+		id, err = strconv.Atoi(idStr)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 			return
 		}
 	}
 
-	if worker1Id != "" && worker2Id != ""{
+	if worker1Id != "" && worker2Id != "" {
 		query = baseString2 + " WHERE worker1_id = ? AND worker2_id = ?"
-		rows, err = db.Query(query, worker1Id,worker2Id)
-	}else if id == 0 && worker1FirstName == "" && worker1LastName == "" && worker2FirstName == "" {
+		rows, err = db.Query(query, worker1Id, worker2Id)
+	} else if id == 0 && worker1FirstName == "" && worker1LastName == "" && worker2FirstName == "" {
 		rows, err = db.Query(baseString2)
 	} else if id > 0 {
 		query = baseString2 + " WHERE id = ?"
@@ -106,14 +105,14 @@ func FindConstraint(c *gin.Context, db *sql.DB) {
 				(w1.first_name = ? AND w1.last_name = ? AND w2.first_name = ? AND w2.last_name = ? )
 			)`
 			rows, err = db.Query(
-				query, worker1FirstName, worker1LastName,worker2FirstName,worker2LastName,
-				worker2FirstName,worker2LastName,worker1FirstName,worker1LastName)
-		} else if worker1FirstName != "" || worker2FirstName != ""  {
+				query, worker1FirstName, worker1LastName, worker2FirstName, worker2LastName,
+				worker2FirstName, worker2LastName, worker1FirstName, worker1LastName)
+		} else if worker1FirstName != "" || worker2FirstName != "" {
 			query = baseString1 + ` (w1.first_name = ? AND w1.last_name = ? OR w2.first_name = ? AND w2.last_name = ?)`
-			if worker1FirstName != ""{
-				rows, err = db.Query(query, worker1FirstName,worker1LastName,worker1FirstName,worker1LastName)
-			}else{
-				rows, err = db.Query(query, worker2FirstName,worker2LastName,worker2FirstName,worker2LastName)
+			if worker1FirstName != "" {
+				rows, err = db.Query(query, worker1FirstName, worker1LastName, worker1FirstName, worker1LastName)
+			} else {
+				rows, err = db.Query(query, worker2FirstName, worker2LastName, worker2FirstName, worker2LastName)
 			}
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Please provide valid search parameters"})
@@ -128,27 +127,27 @@ func FindConstraint(c *gin.Context, db *sql.DB) {
 
 	defer rows.Close()
 
-	if advancedSearch{
+	if advancedSearch {
 		var results []AdvancedConstraintSearch
 
 		for rows.Next() {
 			var constraint AdvancedConstraintSearch
 			innerError := rows.Scan(&constraint.ID, &constraint.Worker1FirstName, &constraint.Worker1LastName,
-				&constraint.Worker2FirstName,&constraint.Worker2LastName,&constraint.Note)
+				&constraint.Worker2FirstName, &constraint.Worker2LastName, &constraint.Note)
 			if innerError != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while scanning location\n" + innerError.Error()})
 				return
 			}
 			results = append(results, constraint)
 		}
-	
+
 		if len(results) == 0 {
 			c.JSON(http.StatusNotFound, gin.H{"error": "No constraint found"})
 			return
 		}
 
 		c.IndentedJSON(http.StatusOK, results)
-	}else{
+	} else {
 		var constraints []Constraint
 
 		for rows.Next() {
@@ -160,7 +159,7 @@ func FindConstraint(c *gin.Context, db *sql.DB) {
 			}
 			constraints = append(constraints, constraint)
 		}
-	
+
 		if len(constraints) == 0 {
 			c.JSON(http.StatusNotFound, gin.H{"error": "No constraint found"})
 			return
@@ -170,7 +169,7 @@ func FindConstraint(c *gin.Context, db *sql.DB) {
 	}
 }
 
-//edit constraints by changing constraints between different workers and reason behind why the constraint exists
+// edit constraints by changing constraints between different workers and reason behind why the constraint exists
 func EditConstraints(c *gin.Context, db *sql.DB) {
 	var constraint Constraint
 	idStr := c.Param("id")
@@ -205,8 +204,6 @@ func EditConstraints(c *gin.Context, db *sql.DB) {
 				errMsg = "Can't use the same worker value for both params"
 			case 1062:
 				errMsg = "Duplicate Entry, a constraint with this ID Number already exists"
-			default:
-				fmt.Print(err)
 			}
 		} else {
 			errMsg = "Unknown error occurred"
@@ -215,16 +212,16 @@ func EditConstraints(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	rowsAffected,_ := result.RowsAffected()
-	if rowsAffected == 0{
-		c.JSON(http.StatusNotFound, gin.H{"error":"No changes made, Entry may not exist or is already up to date"})
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No changes made, Entry may not exist or is already up to date"})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Constraint modified successfully"})
 }
 
-//delete constraint using constraint id
+// delete constraint using constraint id
 func DeleteConstraint(c *gin.Context, db *sql.DB) {
 	idStr := c.Param("id")
 

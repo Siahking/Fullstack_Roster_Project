@@ -96,8 +96,6 @@ export async function editLocation(event){
     const currentLocationName = document.getElementById("current-location").value
     let newLocationName = document.getElementById("new-location").value
 
-    console.log(!newLocationName)
-
     if (!currentLocationName || !newLocationName){
         displayError(errorTagId,"Please insert both the current and new location")
         return
@@ -125,5 +123,4 @@ export async function editLocation(event){
 
     // Fallback for unknown but non-error response
     displayError(errorTagId, "Location update completed.")
-    console.log("editLocation response:", results)
 }

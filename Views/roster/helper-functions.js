@@ -206,7 +206,6 @@ export function dateToString(day,month,year){
 export async function setWorkerForShift(workerArray,date,shiftWorkersArray,constraints){
     while(true){
         if (workerArray.length === 0){
-            console.log("Array is empty")
             return
         }
         const worker = workerArray.pop()
@@ -264,8 +263,6 @@ export async function filterWorkers(workerId,shiftType,locationId,date,otherWork
         "10pm-6am": ["10pm-6am", "6pm-6am"]
     };
 
-    console.log(allWorkersObj)
-
     const relevantShifts = shiftConflicts[shiftType] || []
     const workersToExclude = relevantShifts.flatMap(shift => allWorkersObj[shift] || [])
 
@@ -297,7 +294,6 @@ export async function filterWorkers(workerId,shiftType,locationId,date,otherWork
         return true
     })
 
-    console.log(workerOptions)
     return validateConstraint(constraints,workerOptions,otherWorkers)
 }
 
@@ -617,7 +613,6 @@ export async function setNewNightWorker(newWorkerShift,newWorker,oldWorker){
             const dayShiftSpan = dayWorkerShift.getElementsByClassName("shiftType")[0]
 
             let availableWorkers = await filterGeneralShiftWorkers(newWorkerShift,locationId,date,otherWorkers,dayCoworkerId)
-                if (availableWorkers.length === 0)console.log("empty array found")
             const randomIndex = Math.floor(Math.random() * availableWorkers.length)       
             const newNightWorker = availableWorkers[randomIndex]
             

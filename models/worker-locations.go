@@ -2,21 +2,20 @@ package models
 
 import (
 	"database/sql"
+	"github.com/gin-gonic/gin"
+	"github.com/go-sql-driver/mysql"
 	"net/http"
 	"strconv"
 	"strings"
-	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/go-sql-driver/mysql"
 )
 
 type WorkerLocation struct {
-	ID         int `json:"id"`
+	ID         int  `json:"id"`
 	WorkerID   *int `json:"worker_id"`
 	LocationID *int `json:"location_id"`
 }
 
-//assign workers to location using workerid and locationid
+// assign workers to location using workerid and locationid
 func AssignWorkerToLocation(c *gin.Context, db *sql.DB) {
 	workerIdStr := c.Param("worker_id")
 	locationIdStr := c.Param("location_id")
@@ -53,7 +52,7 @@ func AssignWorkerToLocation(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Connection added successfully"})
 }
 
-//retrieve all connections between workers and locations based on workerid or location id
+// retrieve all connections between workers and locations based on workerid or location id
 func GetWorkerLocationConnections(c *gin.Context, db *sql.DB) {
 	column := strings.TrimSpace(c.Param("column"))
 	valueStr := c.Param("id")
@@ -101,7 +100,7 @@ func GetWorkerLocationConnections(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, connections)
 }
 
-//remove worker to locations connection based on the connection id, worker id or location id
+// remove worker to locations connection based on the connection id, worker id or location id
 func RemoveConnection(c *gin.Context, db *sql.DB) {
 	var query string
 	var result sql.Result
@@ -111,19 +110,19 @@ func RemoveConnection(c *gin.Context, db *sql.DB) {
 	locationID := c.Query("location_id")
 	Id := c.Query("id")
 
-	if Id != ""{
+	if Id != "" {
 		query = "DELETE FROM worker_locations WHERE id = ?"
-		result,err = db.Exec(query,Id)
-	}else if workerID != "" && locationID != ""{
+		result, err = db.Exec(query, Id)
+	} else if workerID != "" && locationID != "" {
 		query = "DELETE FROM worker_locations WHERE worker_id = ? AND location_id = ?"
-		result,err = db.Exec(query,workerID,locationID)
-	}else if workerID != ""{
+		result, err = db.Exec(query, workerID, locationID)
+	} else if workerID != "" {
 		query = "DELETE FROM worker_locations WHERE worker_id = ?"
-		result,err = db.Exec(query,workerID)
-	}else if locationID != ""{
+		result, err = db.Exec(query, workerID)
+	} else if locationID != "" {
 		query = "DELETE FROM worker_locations WHERE location_id = ?"
-		result,err = db.Exec(query,locationID)
-	}else{
+		result, err = db.Exec(query, locationID)
+	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid column input"})
 		return
 	}
@@ -146,7 +145,7 @@ func RemoveConnection(c *gin.Context, db *sql.DB) {
 	}
 }
 
-func EditConnection(c *gin.Context,db *sql.DB){
+func EditConnection(c *gin.Context, db *sql.DB) {
 	var connection WorkerLocation
 	idStr := c.Param("id")
 
@@ -167,8 +166,8 @@ func EditConnection(c *gin.Context,db *sql.DB){
 			location_id = COALESCE(?, location_id)
 			WHERE id = ?`
 
-	result, err := db.Exec(query, connection.WorkerID,connection.LocationID,id)
-	if  err != nil{
+	result, err := db.Exec(query, connection.WorkerID, connection.LocationID, id)
+	if err != nil {
 		var errMsg string
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			switch mysqlErr.Number {
@@ -176,8 +175,6 @@ func EditConnection(c *gin.Context,db *sql.DB){
 				errMsg = "Worker or Location with this ID does not exist"
 			case 1062:
 				errMsg = "Duplicate Entry, a connection with this worker and location params already exists"
-			default:
-				fmt.Print(err)
 			}
 		} else {
 			errMsg = "Unknown error occurred"
@@ -185,10 +182,10 @@ func EditConnection(c *gin.Context,db *sql.DB){
 		c.JSON(http.StatusConflict, gin.H{"error": errMsg})
 		return
 	}
-	rowsAffected,_ := result.RowsAffected()
-	if rowsAffected == 0{
-		c.JSON(http.StatusNotFound, gin.H{"error":"No changes made, Entry may not exist or is already up to date"})
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No changes made, Entry may not exist or is already up to date"})
 		return
 	}
-	c.JSON(http.StatusCreated,gin.H{"message": "Connection modified successfully"})
+	c.JSON(http.StatusCreated, gin.H{"message": "Connection modified successfully"})
 }

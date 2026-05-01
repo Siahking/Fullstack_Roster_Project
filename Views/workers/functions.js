@@ -73,7 +73,6 @@ export async function displayLocations(){
     if (!locations){
         showLocationsDiv.innerText = "No Locations Found"
     }else if(locations.error){
-        console.log("Error fetching locations")
         return
     }
 

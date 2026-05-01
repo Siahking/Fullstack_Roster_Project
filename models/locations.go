@@ -1,20 +1,20 @@
 package models
 
-import(
+import (
 	"database/sql"
 	"fmt"
-	"net/http"
 	"github.com/gin-gonic/gin"
 	"github.com/go-sql-driver/mysql"
+	"net/http"
 	"strings"
 )
 
 type Location struct {
-	ID       int    `json:"id"`
+	ID       int     `json:"id"`
 	Location *string `json:"location"`
 }
 
-//retrieve all locations
+// retrieve all locations
 func GetLocations(c *gin.Context, db *sql.DB) {
 	rows, err := db.Query("SELECT id, location FROM locations")
 
@@ -43,7 +43,7 @@ func GetLocations(c *gin.Context, db *sql.DB) {
 	c.IndentedJSON(http.StatusOK, locations)
 }
 
-//find location by id or name
+// find location by id or name
 func FindLocation(c *gin.Context, db *sql.DB) {
 	var query string
 	var rows *sql.Rows
@@ -88,7 +88,7 @@ func FindLocation(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, locations)
 }
 
-//add a new location
+// add a new location
 func AddLocation(c *gin.Context, db *sql.DB) {
 	newLocation := c.Param("location")
 
@@ -113,7 +113,7 @@ func AddLocation(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Location added successfully"})
 }
 
-//function used to delete a worker or a location
+// function used to delete a worker or a location
 func DeleteEntry(c *gin.Context, db *sql.DB) {
 	table := strings.TrimSpace(c.Param("table"))
 	id := strings.TrimSpace(c.Param("id"))
@@ -152,7 +152,7 @@ func DeleteEntry(c *gin.Context, db *sql.DB) {
 	}
 }
 
-func EditLocation(c *gin.Context,db *sql.DB){
+func EditLocation(c *gin.Context, db *sql.DB) {
 	var location Location
 	currentLocation := c.Param("location")
 
@@ -161,23 +161,23 @@ func EditLocation(c *gin.Context,db *sql.DB){
 		return
 	}
 
-	if *location.Location == ""{
-		c.JSON(http.StatusBadRequest,gin.H{"error":"Invalid location input"})
+	if *location.Location == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid location input"})
 		return
 	}
 
 	query := `UPDATE locations SET location = COALESCE(?, location) WHERE location = ?`
 
-	result,err := db.Exec(query, location.Location, currentLocation)
+	result, err := db.Exec(query, location.Location, currentLocation)
 
-	if err != nil{
+	if err != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Location with this name already exists"})
 		return
 	}
 
-	rowsAffected,_ := result.RowsAffected()
-	if rowsAffected == 0{
-		c.JSON(http.StatusNotFound, gin.H{"error":"No changes made, Entry may not exist or is already up to date"})
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No changes made, Entry may not exist or is already up to date"})
 		return
 	}
 

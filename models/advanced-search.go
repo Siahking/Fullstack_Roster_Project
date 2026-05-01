@@ -10,13 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AdvancedConstraintSearch struct{
-	ID *int `json:"id"`
+type AdvancedConstraintSearch struct {
+	ID               *int    `json:"id"`
 	Worker1FirstName *string `json:"worker1_firstname"`
-	Worker1LastName *string `json:"worker1_lastname"`
+	Worker1LastName  *string `json:"worker1_lastname"`
 	Worker2FirstName *string `json:"worker2_firstname"`
-	Worker2LastName *string `json:"worker2_lastname"`
-	Note *string `json:"note"`
+	Worker2LastName  *string `json:"worker2_lastname"`
+	Note             *string `json:"note"`
 }
 
 func RetrieveWorkersOrLocation(c *gin.Context, db *sql.DB) {

@@ -41,8 +41,7 @@ export async function saveRoster(errorTagId,LocationId,workersDetail){
                 break
             }
         }
-    }catch(error){
-        console.log(error)
+    }catch{
         return
     }finally{   
         document.body.style.cursor = "default"

@@ -110,7 +110,6 @@ export async function newDaysOff(event){
     }
 
     const result = await apiFuncs.addDaysOff(workerId,startDate,endDate)
-    console.log(result)
 
     if (objectCheck(result)){
         displayError(errorTagId,result.error)
@@ -171,7 +170,6 @@ export async function editDaysOff(event){
     }
 
     const daysOffData = await apiFuncs.getDaysOff("break_id",breakId)
-    console.log(daysOffData)
     if (daysOffData.error){
         displayError(errorTagId,"Days Off Data with this ID does not exist")
         return

@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -56,8 +55,6 @@ func SaveRoster(c *gin.Context, db *sql.DB) {
 			case 1062:
 				c.JSON(http.StatusConflict, gin.H{"error": "A roster for this month and location already exists"})
 				return
-			default:
-				fmt.Print(insertionErr)
 			}
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unknown error occured\n" + insertionErr.Error()})
@@ -183,8 +180,6 @@ func EditRoster(c *gin.Context, db *sql.DB) {
 				errMsg = "Month is out of range"
 			case 1062:
 				errMsg = "Roster for this month and location already exists"
-			default:
-				fmt.Print(err)
 			}
 		} else {
 			errMsg = "Unknown error occurred"
@@ -298,8 +293,6 @@ func RosterEntryHandler(c *gin.Context, db *sql.DB) {
 				errMsg = "This roster or this worker does not exist"
 			case 1062:
 				errMsg = "Duplicate Entry, this shift on this date for this worker already exists"
-			default:
-				fmt.Print(insertionError)
 			}
 		} else {
 			errMsg = "Unknown error occurred"
@@ -313,13 +306,13 @@ func RosterEntryHandler(c *gin.Context, db *sql.DB) {
 
 func RetrieveRosterEntries(c *gin.Context, db *sql.DB) {
 	type ExtendedRosterEntry struct {
-		EntryId    int       `json:"entry_id"`
-		RosterId   int       `json:"roster_id"`
-		WorkerId   int       `json:"worker_id"`
-		ShiftDate  string    `json:"shift_date"`
-		ShiftType  string    `json:"shift_type"`
-		FirstName  string    `json:"first_name"`
-		LastName   string    `json:"last_name"`
+		EntryId   int    `json:"entry_id"`
+		RosterId  int    `json:"roster_id"`
+		WorkerId  int    `json:"worker_id"`
+		ShiftDate string `json:"shift_date"`
+		ShiftType string `json:"shift_type"`
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
 	}
 
 	var query string
@@ -331,8 +324,6 @@ func RetrieveRosterEntries(c *gin.Context, db *sql.DB) {
 	workerId := c.Query("worker_id")
 	shift_date := c.Query("shift_date")
 	shift_type := c.Query("shift_type")
-
-	fmt.Println(shift_date + "\n\n")
 
 	if entryId != "" {
 		query = `
@@ -388,7 +379,7 @@ func RetrieveRosterEntries(c *gin.Context, db *sql.DB) {
 
 	for rows.Next() {
 		var entry ExtendedRosterEntry
-		if err := rows.Scan(&entry.EntryId, &entry.RosterId, &entry.WorkerId, &entry.ShiftDate, &entry.ShiftType,&entry.FirstName,&entry.LastName); err != nil {
+		if err := rows.Scan(&entry.EntryId, &entry.RosterId, &entry.WorkerId, &entry.ShiftDate, &entry.ShiftType, &entry.FirstName, &entry.LastName); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in retrieving values\n" + err.Error()})
 			return
 		}
@@ -416,7 +407,6 @@ func EditRosterEntry(c *gin.Context, db *sql.DB) {
 
 	if err := c.ShouldBindJSON(&rosterEntry); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		fmt.Print(err)
 		return
 	}
 

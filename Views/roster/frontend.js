@@ -442,7 +442,6 @@ async function selectWorker(paramObject){
             selectedWorkerId = worker.id
             selectedDisplay.textContent = option.textContent
             optionsContainer.style.display = "none"
-            console.log("clicked")
         })
 
         optionsContainer.appendChild(option)

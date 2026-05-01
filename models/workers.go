@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,20 +12,20 @@ import (
 )
 
 type Worker struct {
-	ID           *int      `json:"id"`
-	FirstName    *string   `json:"first_name"`
-	LastName     *string   `json:"last_name"`
+	ID           *int     `json:"id"`
+	FirstName    *string  `json:"first_name"`
+	LastName     *string  `json:"last_name"`
 	MiddleName   *string  `json:"middle_name"`
 	Gender       *string  `json:"gender"`
-	Address      *string   `json:"address"`
+	Address      *string  `json:"address"`
 	Contact      *string  `json:"contact"`
-	Age          *int      `json:"age"`
-	ID_Number    *int      `json:"id_number"`
+	Age          *int     `json:"age"`
+	ID_Number    *int     `json:"id_number"`
 	Availability *string  `json:"availability"`
 	Hours        []string `json:"hours"`
 }
 
-//create a new worker
+// create a new worker
 func AddWorker(c *gin.Context, db *sql.DB) {
 	var worker Worker
 	if err := c.ShouldBindJSON(&worker); err != nil {
@@ -65,7 +64,7 @@ func AddWorker(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Worker added successfully"})
 }
 
-//find a worker by firstname,lasatname,middlename ,id number or id
+// find a worker by firstname,lasatname,middlename ,id number or id
 func FindWorker(c *gin.Context, db *sql.DB) {
 	baseString := "SELECT * FROM workers WHERE "
 	id := c.Query("id")
@@ -152,14 +151,14 @@ func FindWorker(c *gin.Context, db *sql.DB) {
 	}
 }
 
-//retrieve all workers
+// retrieve all workers
 func GetWorkers(c *gin.Context, db *sql.DB) {
 	rows, err := db.Query("SELECT * FROM workers")
 
 	if err != nil {
 		log.Println("DB Query Error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":"Unable to fetch workers",
+			"error": "Unable to fetch workers",
 		})
 		return
 	}
@@ -200,7 +199,7 @@ func GetWorkers(c *gin.Context, db *sql.DB) {
 	}
 }
 
-func EditWorker(c *gin.Context, db *sql.DB){
+func EditWorker(c *gin.Context, db *sql.DB) {
 	var worker Worker
 	var hoursJSON interface{}
 	idStr := c.Param("id")
@@ -214,13 +213,12 @@ func EditWorker(c *gin.Context, db *sql.DB){
 
 	if err := c.ShouldBindJSON(&worker); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		fmt.Print(err)
 		return
 	}
 
-	if worker.Hours == nil{
+	if worker.Hours == nil {
 		hoursJSON = nil
-	}else{
+	} else {
 		value, err := json.Marshal(worker.Hours)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to convert hours to JSON: \n" + err.Error()})
@@ -241,10 +239,10 @@ func EditWorker(c *gin.Context, db *sql.DB){
 			availability = COALESCE(?, availability),
 			hours = COALESCE(?, hours) 
 			WHERE id = ?`
-	
-	result,err := db.Exec(query, worker.FirstName,worker.LastName,worker.MiddleName,worker.Gender,
-			worker.Address,worker.Contact,worker.Age,worker.ID_Number,worker.Availability,
-			hoursJSON,id)
+
+	result, err := db.Exec(query, worker.FirstName, worker.LastName, worker.MiddleName, worker.Gender,
+		worker.Address, worker.Contact, worker.Age, worker.ID_Number, worker.Availability,
+		hoursJSON, id)
 
 	if err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
@@ -258,9 +256,9 @@ func EditWorker(c *gin.Context, db *sql.DB){
 		}
 	}
 
-	rowsAffected,_ := result.RowsAffected()
-	if rowsAffected == 0{
-		c.JSON(http.StatusNotFound, gin.H{"error":"No changes made, Entry may not exist or is already up to date"})
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No changes made, Entry may not exist or is already up to date"})
 		return
 	}
 

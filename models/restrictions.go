@@ -38,23 +38,23 @@ func CreatePermanentRestriction(c *gin.Context, db *sql.DB) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Please provide valid time values"})
 			return
 		}
-	} else if (startTime == nil || *startTime == "") != (endTime == nil || *endTime == ""){
+	} else if (startTime == nil || *startTime == "") != (endTime == nil || *endTime == "") {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Please insert a start time and a end time"})
 		return
 	}
 
-	var startTimeSQL,endTimeSQL sql.NullString
+	var startTimeSQL, endTimeSQL sql.NullString
 
 	if startTime != nil && *startTime != "" {
 		startTimeSQL = sql.NullString{String: *startTime, Valid: true}
-	}else{
+	} else {
 		startTimeSQL = sql.NullString{Valid: false}
 	}
 
 	if endTime != nil && *endTime != "" {
-		endTimeSQL = sql.NullString{String: *endTime, Valid:true}
-	}else{
-		endTimeSQL = sql.NullString{Valid:false}
+		endTimeSQL = sql.NullString{String: *endTime, Valid: true}
+	} else {
+		endTimeSQL = sql.NullString{Valid: false}
 	}
 
 	query := "INSERT INTO permanent_restrictions (worker_id,day_of_week,start_time,end_time) VALUES (?,?,?,?)"
@@ -197,15 +197,15 @@ func EditRestriction(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	if *restriction.StartTime == "99:99:99" && *restriction.EndTime == "99:99:99"{
+	if *restriction.StartTime == "99:99:99" && *restriction.EndTime == "99:99:99" {
 		query = `UPDATE permanent_restrictions SET 
 				worker_id = COALESCE(?, worker_id),
 				day_of_week = COALESCE(?, day_of_week),
 				start_time = NULL,end_time = NULL WHERE id = ?`
 
-		result,err = db.Exec(query,restriction.WorkerId,restriction.DayOfWeek,id)
-	}else{
-		if *restriction.StartTime == "99:99:99"{
+		result, err = db.Exec(query, restriction.WorkerId, restriction.DayOfWeek, id)
+	} else {
+		if *restriction.StartTime == "99:99:99" {
 			query = `UPDATE permanent_restrictions SET 
 					worker_id = COALESCE(?, worker_id),
 					day_of_week = COALESCE(?, day_of_week),
@@ -213,16 +213,16 @@ func EditRestriction(c *gin.Context, db *sql.DB) {
 					end_time = COALESCE(?, end_time)
 					WHERE id = ?`
 
-			result,err = db.Exec(query,restriction.WorkerId,restriction.DayOfWeek,restriction.EndTime,id)		
-		}else if *restriction.EndTime == "99:99:99"{
+			result, err = db.Exec(query, restriction.WorkerId, restriction.DayOfWeek, restriction.EndTime, id)
+		} else if *restriction.EndTime == "99:99:99" {
 			query = `UPDATE permanent_restrictions SET 
 					worker_id = COALESCE(?, worker_id),
 					day_of_week = COALESCE(?, day_of_week),
 					start_time = COALESCE(?, start_time),
 					end_time = NULL WHERE id = ?`
 
-			result,err = db.Exec(query,restriction.WorkerId,restriction.DayOfWeek,restriction.StartTime,id)		
-		}else{
+			result, err = db.Exec(query, restriction.WorkerId, restriction.DayOfWeek, restriction.StartTime, id)
+		} else {
 			query = `UPDATE permanent_restrictions SET 
 				worker_id = COALESCE(?, worker_id),
 				day_of_week = COALESCE(?, day_of_week),
@@ -239,22 +239,22 @@ func EditRestriction(c *gin.Context, db *sql.DB) {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			switch mysqlErr.Number {
 			case 1265:
-				c.JSON(http.StatusBadRequest,gin.H{"error":"Invalid day value for day of the week field"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid day value for day of the week field"})
 				return
 			case 1292:
-				c.JSON(http.StatusBadRequest, gin.H{"error":"Invalid time value for start time or end time"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid time value for start time or end time"})
 				return
 			case 3819:
-				c.JSON(http.StatusBadRequest,gin.H{"error":"End Time must always be Later than the Start Time"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "End Time must always be Later than the Start Time"})
 				return
 			default:
-				c.JSON(http.StatusInternalServerError,gin.H{"error":"Internal server error \n"+err.Error()})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error \n" + err.Error()})
 				return
 			}
 		}
 	}
 
-	rowsAffected,_:= result.RowsAffected()
+	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "No changes made, Entry may not exist or is already up to date"})
 		return
