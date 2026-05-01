@@ -11,8 +11,8 @@ func RegisterRoutes(router *gin.Engine, db *sql.DB) {
 	//Serve static files
 	router.Static("/css", "./css")
 	router.Static("/views", "./views")
-	router.Static("/controllers","./controllers")
-	
+	router.Static("/controllers", "./controllers")
+
 	router.LoadHTMLGlob("html/*.html")
 
 	// HTML Routes
@@ -27,7 +27,7 @@ func htmlRoutes(router *gin.Engine) {
 	protected.Use(AuthRequired())
 
 	// routes for html pages
-	protected.GET("/",func(c *gin.Context) { 
+	protected.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "login.html", nil)
 	})
 	protected.GET("/home", func(c *gin.Context) { //homepage
@@ -48,28 +48,28 @@ func htmlRoutes(router *gin.Engine) {
 	protected.GET("/constraints", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "constraints.html", nil)
 	})
-	protected.GET("/find-contraints",func(c *gin.Context) {
-		c.HTML(http.StatusOK, "find-constraints.html",nil)
+	protected.GET("/find-contraints", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "find-constraints.html", nil)
 	})
-	router.GET("/days-off",func(c *gin.Context) {
-		c.HTML(http.StatusOK, "days-off.html",nil)
+	router.GET("/days-off", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "days-off.html", nil)
 	})
-	router.GET("/find-days-off",func(c *gin.Context) {
-		c.HTML(http.StatusOK, "find-days-off.html",nil)
+	router.GET("/find-days-off", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "find-days-off.html", nil)
 	})
-	router.GET("/find-restrictions",func(c *gin.Context) {
-		c.HTML(http.StatusOK, "find-restrictions.html",nil)
+	router.GET("/find-restrictions", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "find-restrictions.html", nil)
 	})
-	router.GET("/create-roster",func(c *gin.Context) {
-		c.HTML(http.StatusOK, "create-roster.html",nil)
+	router.GET("/create-roster", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "create-roster.html", nil)
 	})
-	router.GET("find-rosters",func(c *gin.Context) {
-		c.HTML(http.StatusOK, "find-rosters.html",nil)
+	router.GET("find-rosters", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "find-rosters.html", nil)
 	})
-	router.GET("/login",func(c *gin.Context) {
-		c.HTML(http.StatusOK, "login.html",nil)
+	router.GET("/login", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "login.html", nil)
 	})
-	router.GET("/account-info",func(c *gin.Context) {
+	router.GET("/account-info", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "account-info.html", nil)
 	})
 }
@@ -115,7 +115,7 @@ func apiRouter(router *gin.Engine, db *sql.DB) {
 		AddWorker(c, db)
 	})
 	//edit worker
-	protected.PATCH("/edit-worker/:id",func(c *gin.Context) {
+	protected.PATCH("/edit-worker/:id", func(c *gin.Context) {
 		EditWorker(c, db)
 	})
 
@@ -133,13 +133,13 @@ func apiRouter(router *gin.Engine, db *sql.DB) {
 		RemoveConnection(c, db)
 	})
 	//edit worker or location in connection
-	protected.PATCH("edit-connection/:id", func(c *gin.Context){
+	protected.PATCH("edit-connection/:id", func(c *gin.Context) {
 		EditConnection(c, db)
 	})
 
 	//CONTRAINTS ROUTES
 	//create a constraint
-	protected.POST("/create-constraint", func(c *gin.Context){
+	protected.POST("/create-constraint", func(c *gin.Context) {
 		CreateConstrant(c, db)
 	})
 	//find a constraint
@@ -188,99 +188,103 @@ func apiRouter(router *gin.Engine, db *sql.DB) {
 	})
 	//find restrictions using data
 	protected.GET("/find-restriction/:column/:id", func(c *gin.Context) {
-		FindRestriction(c,db)
+		FindRestriction(c, db)
 	})
 	//delete restriction
-	protected.DELETE("/delete-restriction/:id",func(c *gin.Context) {
-		DeleteRestriction(c,db)
+	protected.DELETE("/delete-restriction/:id", func(c *gin.Context) {
+		DeleteRestriction(c, db)
 	})
 	//edit restirction
-	protected.PATCH("edit-restriction/:id",func(c *gin.Context) {
-		EditRestriction(c,db)
+	protected.PATCH("edit-restriction/:id", func(c *gin.Context) {
+		EditRestriction(c, db)
 	})
 
 	//occupancy routes
 	//create a new occupancy
-	protected.POST("/create-occupancy",func(c *gin.Context) {
-		CreateNewOccupancy(c,db)
+	protected.POST("/create-occupancy", func(c *gin.Context) {
+		CreateNewOccupancy(c, db)
 	})
 	//retrieve all occupancies
-	protected.GET("/retrieve-occupancies",func(c *gin.Context) {
-		RetrieveOccupancies(c,db)
+	protected.GET("/retrieve-occupancies", func(c *gin.Context) {
+		RetrieveOccupancies(c, db)
 	})
 	//delete occuoancies
-	protected.DELETE("/delete-occupancy/:id",func(c *gin.Context) {
-		RemoveOccupancy(c,db)
+	protected.DELETE("/delete-occupancy/:id", func(c *gin.Context) {
+		RemoveOccupancy(c, db)
 	})
 	//delete all occupancies
-	protected.DELETE("/clear-occupancies",func(c *gin.Context) {
-		EmptyOccupancies(c,db)
+	protected.DELETE("/clear-occupancies", func(c *gin.Context) {
+		EmptyOccupancies(c, db)
 	})
 
 	//find worker data for locations of find locations data for workers
-	protected.GET("/retrieve-workers-locations/:column/:id",func(c *gin.Context) {
-		RetrieveWorkersOrLocation(c,db)
+	protected.GET("/retrieve-workers-locations/:column/:id", func(c *gin.Context) {
+		RetrieveWorkersOrLocation(c, db)
 	})
 
 	//roster endpoints
 	//save a roster
 	protected.POST("/save-roster", func(c *gin.Context) {
-		SaveRoster(c,db)
+		SaveRoster(c, db)
 	})
 	//retrieve rosters
 	protected.GET("/retrieve-rosters", func(c *gin.Context) {
-		RetrieveRosters(c,db)
+		RetrieveRosters(c, db)
 	})
 	//edit roster
-	protected.PATCH("/edit-roster/:id", func(c *gin.Context){
-		EditRoster(c,db)
+	protected.PATCH("/edit-roster/:id", func(c *gin.Context) {
+		EditRoster(c, db)
 	})
 	//delete roster
-	protected.DELETE("/delete-roster", func(c *gin.Context){
-		DeleteRoster(c,db)
+	protected.DELETE("/delete-roster", func(c *gin.Context) {
+		DeleteRoster(c, db)
+	})
+	//create roster PDF
+	protected.POST("/create-pdf", func(c *gin.Context) {
+		GeneratePDF(c)
 	})
 
 	//roster entries routes
 	//create entry
-	protected.POST("/roster-entry", func(c *gin.Context){
-		RosterEntryHandler(c,db)
+	protected.POST("/roster-entry", func(c *gin.Context) {
+		RosterEntryHandler(c, db)
 	})
 	//retrieve roster entries
-	protected.GET("/retrieve-entry", func(c *gin.Context){
-		RetrieveRosterEntries(c,db)
+	protected.GET("/retrieve-entry", func(c *gin.Context) {
+		RetrieveRosterEntries(c, db)
 	})
 	//edit roster entries
-	protected.PATCH("/edit-entry/:id",func(c *gin.Context){
-		EditRosterEntry(c,db)
+	protected.PATCH("/edit-entry/:id", func(c *gin.Context) {
+		EditRosterEntry(c, db)
 	})
 	//delete roster entry
-	protected.DELETE("/delete-entry", func(c *gin.Context){
-		DeleteRosterEntry(c,db)
+	protected.DELETE("/delete-entry", func(c *gin.Context) {
+		DeleteRosterEntry(c, db)
 	})
 
 	//account routes
 	//create account
-	router.POST("/create-account",func(c *gin.Context){
-		CreateAccount(c,db)
+	router.POST("/create-account", func(c *gin.Context) {
+		CreateAccount(c, db)
 	})
 	//edit accounts
-	protected.PATCH("/edit-account/:id", func(c *gin.Context){
-		EditAccount(c,db)
+	protected.PATCH("/edit-account/:id", func(c *gin.Context) {
+		EditAccount(c, db)
 	})
 	//delete account
-	protected.DELETE("/delete-account", func(c *gin.Context){
-		DeleteAccount(c,db)
+	protected.DELETE("/delete-account", func(c *gin.Context) {
+		DeleteAccount(c, db)
 	})
 	//find account
-	protected.GET("/retrieve-account/:username", func(c *gin.Context){
-		FindAccount(c,db)
+	protected.GET("/retrieve-account/:username", func(c *gin.Context) {
+		FindAccount(c, db)
 	})
 	//login
-	router.POST("/login", func(c *gin.Context){
-		Login(c,db)
+	router.POST("/login", func(c *gin.Context) {
+		Login(c, db)
 	})
 	//logout
-	protected.POST("/logout",func(c *gin.Context){
+	protected.POST("/logout", func(c *gin.Context) {
 		Logout(c)
 	})
 }

@@ -192,31 +192,252 @@ export function resetShifts(newWorker,newWorkerShift,oldWorker){
     }
 }
 
-export function downloadRosterPdf(containerId, locationName, month, year) {
-    const container = document.getElementById(containerId)
-    container.classList.add("print-mode")
+function escapeHtml(value) {
+    return `${value ?? ""}`
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;")
+}
 
-    const options = {
-        margin: 0,
-        filename: `${locationName}-${month}-${year}-roster.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: {
-            scale: 1,
-            useCORS: true
-        },
-        jsPDF: { 
-            unit: "in", 
-            format: "letter", 
-            orientation: "landscape"
-        },
-        pagebreak: { mode: ['avoid-all'] }
+function safePdfFilename(locationName, month, year) {
+    const safeLocation = `${locationName}`
+        .trim()
+        .replace(/[^a-z0-9]+/gi, "-")
+        .replace(/^-+|-+$/g, "")
+        .toLowerCase()
+
+    return `${safeLocation || "location"}-${month}-${year}-roster.pdf`
+}
+
+function getShiftText(shiftBlock) {
+    const clone = shiftBlock.cloneNode(true)
+    clone.querySelectorAll("button").forEach(button => button.remove())
+
+    return Array.from(clone.querySelectorAll("p"))
+        .map(tag => {
+            const workerName = tag.querySelector(".workerInfo")?.textContent || ""
+            const shiftType = tag.querySelector(".shiftType")?.textContent || ""
+            const combinedText = workerName || shiftType
+                ? `${workerName} ${shiftType}`
+                : tag.textContent
+
+            return combinedText.replace(/\s+/g, " ").trim()
+        })
+        .filter(Boolean)
+}
+
+function buildShiftHtml(dayCell, shiftClass, label) {
+    const shiftBlock = dayCell.querySelector(`.${shiftClass}`)
+    if (!shiftBlock) return ""
+
+    const workers = getShiftText(shiftBlock)
+    if (workers.length === 0) return ""
+
+    const workerHtml = workers
+        .map(worker => `<div class="worker">${escapeHtml(worker)}</div>`)
+        .join("")
+
+    return `
+        <div class="shift ${shiftClass}">
+            <div class="shift-label">${escapeHtml(label)}</div>
+            ${workerHtml}
+        </div>
+    `
+}
+
+function buildRosterPdfHtml(container, locationName, month, year) {
+    const calendar = container.querySelector(".calendar-container")
+    if (!calendar) return ""
+
+    const date = new Date(year, month - 1, 1)
+    const monthName = date.toLocaleString("en-US", { month: "long" })
+    const headers = Array.from(calendar.querySelectorAll(".calendar-header"))
+        .slice(0, 7)
+        .map(header => header.textContent.trim())
+
+    const cells = Array.from(calendar.children).slice(7)
+    const rowHtml = []
+
+    for (let index = 0; index < cells.length; index += 7) {
+        const weekCells = cells.slice(index, index + 7)
+        while (weekCells.length < 7) {
+            const emptyCell = document.createElement("div")
+            emptyCell.className = "empty-cell"
+            weekCells.push(emptyCell)
+        }
+
+        const cellHtml = weekCells.map(dayCell => {
+            if (dayCell.classList.contains("empty-cell")) {
+                return "<td class=\"empty\"></td>"
+            }
+
+            const dayNumber = dayCell.querySelector(".day-number")?.textContent.trim() || ""
+            return `
+                <td>
+                    <div class="day-number">${escapeHtml(dayNumber)}</div>
+                    ${buildShiftHtml(dayCell, "shift-1", "Day")}
+                    ${buildShiftHtml(dayCell, "shift-2", "Afternoon")}
+                    ${buildShiftHtml(dayCell, "shift-3", "Night")}
+                </td>
+            `
+        }).join("")
+
+        rowHtml.push(`<tr>${cellHtml}</tr>`)
     }
 
-    requestAnimationFrame(() => {
-        setTimeout(() => {
-            html2pdf().set(options).from(container).save().then(() => {
-                container.classList.remove("print-mode")
-            })
-        }, 50)
-    })
+    const headerHtml = headers
+        .map(day => `<th>${escapeHtml(day)}</th>`)
+        .join("")
+
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                * {
+                    box-sizing: border-box;
+                }
+
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    color: #111;
+                }
+
+                h1 {
+                    margin: 0 0 10px;
+                    text-align: center;
+                    font-size: 22px;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    table-layout: fixed;
+                }
+
+                th {
+                    border: 1px solid #777;
+                    background: #f0f0f0;
+                    font-size: 13px;
+                    padding: 5px;
+                }
+
+                td {
+                    height: 108px;
+                    border: 1px solid #999;
+                    vertical-align: top;
+                    padding: 4px;
+                }
+
+                td.empty {
+                    background: #f7f7f7;
+                }
+
+                .day-number {
+                    text-align: right;
+                    font-weight: bold;
+                    font-size: 12px;
+                    margin-bottom: 3px;
+                }
+
+                .shift {
+                    border: 1px solid #c8c8c8;
+                    margin-bottom: 3px;
+                    padding: 3px;
+                    min-height: 24px;
+                }
+
+                .shift-1 {
+                    background: #d9edf7;
+                }
+
+                .shift-2 {
+                    background: #dff0d8;
+                }
+
+                .shift-3 {
+                    background: #f2dede;
+                }
+
+                .shift-label {
+                    font-size: 9px;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                    letter-spacing: 0;
+                    margin-bottom: 2px;
+                }
+
+                .worker {
+                    font-size: 10px;
+                    line-height: 1.2;
+                    margin-bottom: 2px;
+                    word-break: break-word;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>${escapeHtml(locationName)} - ${escapeHtml(monthName)} ${escapeHtml(year)}</h1>
+            <table>
+                <thead>
+                    <tr>${headerHtml}</tr>
+                </thead>
+                <tbody>
+                    ${rowHtml.join("")}
+                </tbody>
+            </table>
+        </body>
+        </html>
+    `
+}
+
+export async function downloadRosterPdf(containerId, locationName, month, year) {
+    const container = document.getElementById(containerId)
+    if (!container) {
+        alert(`Roster container not found: ${containerId}`)
+        return
+    }
+
+    const filename = safePdfFilename(locationName, month, year)
+    const html = buildRosterPdfHtml(container, locationName, month, year)
+    if (!html) {
+        alert("Could not build roster PDF HTML")
+        return
+    }
+
+    try {
+        const response = await fetch("/create-pdf", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ html, filename })
+        })
+
+        if (!response.ok) {
+            let message = "Could not create PDF"
+            try {
+                const data = await response.json()
+                message = data.error || message
+            } catch {
+                message = await response.text()
+            }
+            alert(message)
+            return
+        }
+
+        const blob = await response.blob()
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+
+        link.href = url
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        URL.revokeObjectURL(url)
+    } catch (error) {
+        alert(`Could not create PDF: ${error.message}`)
+    }
 }

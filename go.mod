@@ -3,6 +3,7 @@ module final-project
 go 1.24.0
 
 require (
+	github.com/SebastiaanKlippert/go-wkhtmltopdf v1.9.3
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-contrib/sessions v1.0.4
 	github.com/gin-gonic/gin v1.10.1
