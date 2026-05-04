@@ -173,12 +173,32 @@ export async function addWorkerHandler(event){
 
     event.preventDefault()
 
-    const firstName = document.getElementById('add-first-name-input').value
-    const lastName = document.getElementById('add-last-name-input').value
-    const middleName = document.getElementById('add-middle-name-input').value !== "" ? document.getElementById('add-middle-name-input').value : null;
-    const gender = document.getElementById('add-gender-input').value !== "" ? document.getElementById('add-gender-input').value : null;
-    const address = document.getElementById('add-address-input').value
-    const contact = document.getElementById('add-contact-input').value !== "" ? document.getElementById('add-contact-input').value : null;
+    const capitalize = (str) => {
+        if (!str) return null;
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+
+    const formatAddress = (address) => {
+        if (!address || address.trim() === "") return null;
+
+        return address
+            .split(" ") // Split the string into an array of words
+            .map(word => {
+            // Handle the case where there might be double spaces
+            if (word.length === 0) return word;
+
+            // Capitalize the first letter and lowercase the rest
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            })
+            .join(" "); // Put the words back together with spaces
+    };
+
+    const firstName = capitalize(document.getElementById('add-first-name-input').value)
+    const lastName = capitalize(document.getElementById('add-last-name-input').value)
+    const middleName = capitalize(document.getElementById('add-middle-name-input').value)
+    const gender = document.getElementById('add-gender-input').value
+    const address = formatAddress(document.getElementById('add-address-input').value)
+    const contact = document.getElementById('add-contact-input').value
     const age = Number(document.getElementById('add-age-input').value)
     const idNumber = Number(document.getElementById('add-id-number-input').value)
     const [availability,hours] = assignHours()
