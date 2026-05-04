@@ -91,3 +91,44 @@ a:hover,button:hover{
     justify-content: center;
     align-items: center;
 }
+
+@media (min-width: 425px){
+    .options{
+        display: flex;
+        flex-wrap: wrap;;
+        justify-content: center;
+    }
+}
+
+@media (min-width: 768px){
+    .options{
+        display: flex;
+        flex-wrap: wrap;;
+        justify-content: center;
+    }
+
+    h1{
+        font-size: 3.5rem;
+    }
+
+    p{
+        font-size: 1.8rem;
+    }
+
+    button,a{
+        font-size: 1.7rem;
+        padding: .4rem .9rem;
+        border-radius: 1.7rem;
+        margin: .6rem .5rem;
+    }
+
+    a{
+      font-size: 1.8rem;  
+    }
+}
+
+@media (min-width: 1440px){
+    h1{
+        font-size: 6rem;
+    }
+}
