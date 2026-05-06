@@ -4,6 +4,13 @@
     --input-grey:#BEBEBE;
 }
 
+html,
+body{
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
 .buttons-div,.nav-container,.data-input-container,.error-container{
     display: flex;
 }

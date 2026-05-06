@@ -117,7 +117,7 @@ a:hover,button:hover{
     }
 }
 
-@media (min-width: 1440px){
+/* @media (min-width: 1440px){
     h1{
         font-size: 5.8rem;
     }
@@ -133,4 +133,4 @@ a:hover,button:hover{
         margin: .6rem .5rem;
     }
 
-}
+} */
