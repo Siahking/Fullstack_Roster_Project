@@ -25,6 +25,7 @@ h1{
 }
 
 a,button{
+    font-family: Arial, sans-serif;
     text-decoration: none;
     margin: 5px;
     border: solid var(--button-grey) 1px;
@@ -108,22 +109,22 @@ a:hover,button:hover{
     }
 
     h1{
-        font-size: 3.5rem;
+        font-size: 3rem;
     }
 
     p{
-        font-size: 1.8rem;
+        font-size: 1.2rem;
     }
 
     button,a{
-        font-size: 1.7rem;
+        font-size: 1rem;
         padding: .4rem .9rem;
         border-radius: 1.7rem;
         margin: .6rem .5rem;
     }
 
     a{
-      font-size: 1.8rem;  
+      font-size: 1rem;  
     }
 }
 
