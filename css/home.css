@@ -38,7 +38,8 @@ a,button{
 }
 
 a{
-    padding:3px 8px;
+    padding:6px 8px;
+    font-size: 13px;
 }
 
 button{
@@ -50,6 +51,12 @@ button{
     max-height: 0;
     overflow: hidden;
     transition: opacity 0.3s ease, max-height 0.3s ease;
+}
+
+.options{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .visible{
@@ -93,43 +100,37 @@ a:hover,button:hover{
     align-items: center;
 }
 
-@media (min-width: 425px){
-    .options{
-        display: flex;
-        flex-wrap: wrap;;
-        justify-content: center;
-    }
-}
-
 @media (min-width: 768px){
-    .options{
-        display: flex;
-        flex-wrap: wrap;;
-        justify-content: center;
-    }
-
     h1{
-        font-size: 3rem;
+        font-size: 4rem;
     }
 
     p{
-        font-size: 1.2rem;
+        font-size: 1.4rem;
     }
 
     button,a{
-        font-size: 1rem;
-        padding: .4rem .9rem;
+        font-size: 1.1rem;;
+        padding: .3rem .8rem;
         border-radius: 1.7rem;
         margin: .6rem .5rem;
-    }
-
-    a{
-      font-size: 1rem;  
     }
 }
 
 @media (min-width: 1440px){
     h1{
-        font-size: 6rem;
+        font-size: 5.8rem;
     }
+
+    p{
+        font-size: 1.9rem;
+    }
+
+    button,a{
+        font-size: 1.6rem;;
+        padding: .5rem 1rem;
+        border-radius: 1.7rem;
+        margin: .6rem .5rem;
+    }
+
 }
