@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-sql-driver/mysql"
 )
 
 type Roster struct {
@@ -41,22 +40,20 @@ func SaveRoster(c *gin.Context, db *sql.DB) {
 
 	query := "INSERT INTO roster (location_id,month,year) VALUES (?,?,?)"
 
-	_, insertionErr := db.Exec(query, roster.LocationId, roster.Month, roster.Year)
+	_, insertionErr := execDB(db, query, roster.LocationId, roster.Month, roster.Year)
 
 	if insertionErr != nil {
-		if mysqlErr, ok := insertionErr.(*mysql.MySQLError); ok {
-			switch mysqlErr.Number {
-			case 3819:
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Month input"})
-				return
-			case 1452:
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "This Location does not exist"})
-				return
-			case 1062:
-				c.JSON(http.StatusConflict, gin.H{"error": "A roster for this month and location already exists"})
-				return
-			}
-		} else {
+		switch {
+		case hasPostgresCode(insertionErr, pgCheckViolation):
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Month input"})
+			return
+		case hasPostgresCode(insertionErr, pgForeignKeyViolation):
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "This Location does not exist"})
+			return
+		case hasPostgresCode(insertionErr, pgUniqueViolation):
+			c.JSON(http.StatusConflict, gin.H{"error": "A roster for this month and location already exists"})
+			return
+		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unknown error occured\n" + insertionErr.Error()})
 			return
 		}
@@ -90,31 +87,31 @@ func RetrieveRosters(c *gin.Context, db *sql.DB) {
 	}
 
 	if rosterId == "" && locationId == "" && month == "" && year == "" {
-		results, searchError = db.Query("SELECT * FROM roster")
+		results, searchError = queryDB(db, "SELECT * FROM roster")
 	} else if rosterId != "" {
 		query = "SELECT * FROM roster WHERE roster_id = ?"
-		results, searchError = db.Query(query, rosterId)
+		results, searchError = queryDB(db, query, rosterId)
 	} else if locationId != "" && month != "" && year == "" {
 		query = "SELECT * FROM roster WHERE location_id = ? AND month = ? AND year = ?"
-		results, searchError = db.Query(query, locationId, month, year)
+		results, searchError = queryDB(db, query, locationId, month, year)
 	} else if locationId != "" && year != "" {
 		query = "SELECT * FROM roster WHERE location_id = ? AND year = ?"
-		results, searchError = db.Query(query, locationId, year)
+		results, searchError = queryDB(db, query, locationId, year)
 	} else if month != "" && locationId != "" {
 		query = "SELECT * FROM roster WHERE month = ? AND location_id = ?"
-		results, searchError = db.Query(query, month, locationId)
+		results, searchError = queryDB(db, query, month, locationId)
 	} else if month != "" && year != "" {
 		query = "SELECT * FROM roster WHERE month = ? AND year = ?"
-		results, searchError = db.Query(query, month, year)
+		results, searchError = queryDB(db, query, month, year)
 	} else if month != "" {
 		query = "SELECT * FROM roster WHERE month = ?"
-		results, searchError = db.Query(query, month)
+		results, searchError = queryDB(db, query, month)
 	} else if locationId != "" {
 		query = "SELECT * FROM roster WHERE location_id = ?"
-		results, searchError = db.Query(query, locationId)
+		results, searchError = queryDB(db, query, locationId)
 	} else if year != "" {
 		query = "SELECT * FROM roster WHERE year = ?"
-		results, searchError = db.Query(query, year)
+		results, searchError = queryDB(db, query, year)
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid param"})
 		return
@@ -168,20 +165,18 @@ func EditRoster(c *gin.Context, db *sql.DB) {
 			WHERE roster_id = ?
 	`
 
-	result, err := db.Exec(query, roster.LocationId, roster.Month, id)
+	result, err := execDB(db, query, roster.LocationId, roster.Month, roster.Year, id)
 
 	if err != nil {
 		var errMsg string
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			switch mysqlErr.Number {
-			case 1452:
-				errMsg = "Location with this ID does not exist"
-			case 3819:
-				errMsg = "Month is out of range"
-			case 1062:
-				errMsg = "Roster for this month and location already exists"
-			}
-		} else {
+		switch {
+		case hasPostgresCode(err, pgForeignKeyViolation):
+			errMsg = "Location with this ID does not exist"
+		case hasPostgresCode(err, pgCheckViolation):
+			errMsg = "Month is out of range"
+		case hasPostgresCode(err, pgUniqueViolation):
+			errMsg = "Roster for this month and location already exists"
+		default:
 			errMsg = "Unknown error occurred"
 		}
 		c.JSON(http.StatusConflict, gin.H{"error": errMsg})
@@ -208,28 +203,28 @@ func DeleteRoster(c *gin.Context, db *sql.DB) {
 
 	if rosterId != "" {
 		query = "DELETE FROM roster WHERE roster_id = ?"
-		result, deleteErr = db.Exec(query, rosterId)
+		result, deleteErr = execDB(db, query, rosterId)
 	} else if locationId != "" && month != "" && year != "" {
 		query = "DELETE FROM roster WHERE location_id = ? AND month = ? AND year = ?"
-		result, deleteErr = db.Exec(query, locationId, month)
+		result, deleteErr = execDB(db, query, locationId, month, year)
 	} else if locationId != "" && year != "" {
 		query = "DELETE FROM roster WHERE location_id = ? AND year = ?"
-		result, deleteErr = db.Exec(query, locationId, year)
+		result, deleteErr = execDB(db, query, locationId, year)
 	} else if month != "" && year != "" {
 		query = "DELETE FROM roster WHERE month = ? AND year = ?"
-		result, deleteErr = db.Exec(query, month, year)
+		result, deleteErr = execDB(db, query, month, year)
 	} else if month != "" && locationId != "" {
 		query = "DELETE FROM roster WHERE month = ? AND location_id = ?"
-		result, deleteErr = db.Exec(query, month, locationId)
+		result, deleteErr = execDB(db, query, month, locationId)
 	} else if month != "" {
 		query = "DELETE FROM roster WHERE month = ?"
-		result, deleteErr = db.Exec(query, month)
+		result, deleteErr = execDB(db, query, month)
 	} else if year != "" {
 		query = "DELETE FROM roster WHERE year = ?"
-		result, deleteErr = db.Exec(query, year)
+		result, deleteErr = execDB(db, query, year)
 	} else if locationId != "" {
 		query = "DELETE FROM roster WHERE location_id = ?"
-		result, deleteErr = db.Exec(query, locationId)
+		result, deleteErr = execDB(db, query, locationId)
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input params"})
 		return
@@ -281,20 +276,18 @@ func RosterEntryHandler(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	query := "INSERT INTO roster_entries (roster_id,worker_id,shift_date,shift_type) VALUES (?,?,?,?)"
+	query := "INSERT INTO roster_entries (roster_id,worker_id,shift_date,shift_type) VALUES (?,?,?::date,?)"
 
-	_, insertionError := db.Exec(query, entry.RosterId, entry.WorkerId, entry.ShiftDate, entry.ShiftType)
+	_, insertionError := execDB(db, query, entry.RosterId, entry.WorkerId, entry.ShiftDate, entry.ShiftType)
 
 	if insertionError != nil {
 		var errMsg string
-		if mysqlErr, ok := insertionError.(*mysql.MySQLError); ok {
-			switch mysqlErr.Number {
-			case 1452:
-				errMsg = "This roster or this worker does not exist"
-			case 1062:
-				errMsg = "Duplicate Entry, this shift on this date for this worker already exists"
-			}
-		} else {
+		switch {
+		case hasPostgresCode(insertionError, pgForeignKeyViolation):
+			errMsg = "This roster or this worker does not exist"
+		case hasPostgresCode(insertionError, pgUniqueViolation):
+			errMsg = "Duplicate Entry, this shift on this date for this worker already exists"
+		default:
 			errMsg = "Unknown error occurred"
 		}
 		c.JSON(http.StatusConflict, gin.H{"error": errMsg})
@@ -327,16 +320,16 @@ func RetrieveRosterEntries(c *gin.Context, db *sql.DB) {
 
 	if entryId != "" {
 		query = `
-			SELECT re.entry_id, re.roster_id, re.worker_id, re.shift_date, re.shift_type,
+			SELECT re.entry_id, re.roster_id, re.worker_id, re.shift_date::text, re.shift_type,
 			       w.first_name, w.last_name
 			FROM roster_entries re
 			JOIN workers w ON re.worker_id = w.id
 			WHERE re.entry_id = ?
 			ORDER BY re.shift_date`
-		rows, extractionErr = db.Query(query, entryId)
+		rows, extractionErr = queryDB(db, query, entryId)
 	} else {
 		baseQuery := `
-			SELECT re.entry_id, re.roster_id, re.worker_id, re.shift_date, re.shift_type,
+			SELECT re.entry_id, re.roster_id, re.worker_id, re.shift_date::text, re.shift_type,
 			       w.first_name, w.last_name
 			FROM roster_entries re
 			JOIN workers w ON re.worker_id = w.id
@@ -368,7 +361,7 @@ func RetrieveRosterEntries(c *gin.Context, db *sql.DB) {
 		whereClause := strings.Join(conditions, " AND ")
 		finalQuery := baseQuery + whereClause + " ORDER BY shift_date"
 
-		rows, extractionErr = db.Query(finalQuery, args...)
+		rows, extractionErr = queryDB(db, finalQuery, args...)
 	}
 
 	if extractionErr != nil {
@@ -428,11 +421,11 @@ func EditRosterEntry(c *gin.Context, db *sql.DB) {
 	query := `UPDATE roster_entries SET
 			roster_id = COALESCE(?, roster_id),
 			worker_id = COALESCE(?, worker_id),
-			shift_date = COALESCE(?, shift_date),
+			shift_date = COALESCE(?::date, shift_date),
 			shift_type = COALESCE(?, shift_type)
 			WHERE entry_id = ?`
 
-	result, _ := db.Exec(query, rosterEntry.RosterId, rosterEntry.WorkerId, rosterEntry.ShiftDate, rosterEntry.ShiftType, id)
+	result, _ := execDB(db, query, rosterEntry.RosterId, rosterEntry.WorkerId, rosterEntry.ShiftDate, rosterEntry.ShiftType, id)
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
@@ -455,7 +448,7 @@ func DeleteRosterEntry(c *gin.Context, db *sql.DB) {
 
 	if entryId != "" {
 		query = "DELETE FROM roster_entries WHERE entry_id = ?"
-		result, deleteErr = db.Exec(query, entryId)
+		result, deleteErr = execDB(db, query, entryId)
 	} else {
 		baseQuery := "DELETE FROM roster_entries WHERE "
 		var conditions []string
@@ -497,7 +490,7 @@ func DeleteRosterEntry(c *gin.Context, db *sql.DB) {
 		whereClause := strings.Join(conditions, " AND ")
 		finalQuery := baseQuery + whereClause
 
-		result, deleteErr = db.Exec(finalQuery, args...)
+		result, deleteErr = execDB(db, finalQuery, args...)
 	}
 
 	if deleteErr != nil {

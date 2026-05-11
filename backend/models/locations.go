@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/go-sql-driver/mysql"
 	"net/http"
 	"strings"
 )
@@ -16,7 +15,7 @@ type Location struct {
 
 // retrieve all locations
 func GetLocations(c *gin.Context, db *sql.DB) {
-	rows, err := db.Query("SELECT id, location FROM locations")
+	rows, err := queryDB(db, "SELECT id, location FROM locations")
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -59,10 +58,10 @@ func FindLocation(c *gin.Context, db *sql.DB) {
 		return
 	} else if column == "id" {
 		query = baseString + "id = ?"
-		rows, err = db.Query(query, value)
+		rows, err = queryDB(db, query, value)
 	} else {
 		query = baseString + "LOWER(location) LIKE LOWER(?)"
-		rows, err = db.Query(query, "%"+value+"%")
+		rows, err = queryDB(db, query, "%"+value+"%")
 	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error searching for values\n" + err.Error()})
@@ -98,13 +97,11 @@ func AddLocation(c *gin.Context, db *sql.DB) {
 	}
 
 	query := "INSERT INTO locations (location) VALUES (?)"
-	_, err := db.Exec(query, newLocation)
+	_, err := execDB(db, query, newLocation)
 	if err != nil {
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			if mysqlErr.Number == 1062 {
-				c.JSON(http.StatusConflict, gin.H{"error": "This location already exists"})
-				return
-			}
+		if hasPostgresCode(err, pgUniqueViolation) {
+			c.JSON(http.StatusConflict, gin.H{"error": "This location already exists"})
+			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert value\n" + err.Error()})
 		return
@@ -132,7 +129,7 @@ func DeleteEntry(c *gin.Context, db *sql.DB) {
 	var result sql.Result
 	var err error
 
-	result, err = db.Exec(query)
+	result, err = execDB(db, query)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in getting rows " + err.Error()})
@@ -168,7 +165,7 @@ func EditLocation(c *gin.Context, db *sql.DB) {
 
 	query := `UPDATE locations SET location = COALESCE(?, location) WHERE location = ?`
 
-	result, err := db.Exec(query, location.Location, currentLocation)
+	result, err := execDB(db, query, location.Location, currentLocation)
 
 	if err != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Location with this name already exists"})

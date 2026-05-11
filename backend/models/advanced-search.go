@@ -40,7 +40,7 @@ func RetrieveWorkersOrLocation(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	rows, err := db.Query(query, value)
+	rows, err := queryDB(db, query, value)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve values from database\n" + err.Error()})
 		return

@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"github.com/gin-gonic/gin"
-	"github.com/go-sql-driver/mysql"
 	"net/http"
 	"strconv"
 	"strings"
@@ -35,15 +34,13 @@ func CreateNewOccupancy(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	query := "INSERT INTO occupancy (worker_id,event_date,note) VALUES (?,?,?)"
-	_, err := db.Exec(query, occupancy.WorkerId, occupancy.EventDate, occupancy.Note)
+	query := "INSERT INTO occupancy (worker_id,event_date,note) VALUES (?,?::date,?)"
+	_, err := execDB(db, query, occupancy.WorkerId, occupancy.EventDate, occupancy.Note)
 
 	if err != nil {
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			if mysqlErr.Number == 1062 {
-				c.JSON(http.StatusConflict, gin.H{"error": "This Occupancy for this worker already exists"})
-				return
-			}
+		if hasPostgresCode(err, pgUniqueViolation) {
+			c.JSON(http.StatusConflict, gin.H{"error": "This Occupancy for this worker already exists"})
+			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in inserting values,\n" + err.Error()})
 		return
@@ -91,12 +88,12 @@ func RetrieveOccupancies(c *gin.Context, db *sql.DB) {
 	}
 
 	if len(conditions) == 0 {
-		query = "SELECT * FROM occupancy ORDER BY event_date"
-		rows, err = db.Query(query)
+		query = "SELECT id, worker_id, event_date::text, note FROM occupancy ORDER BY event_date"
+		rows, err = queryDB(db, query)
 	} else {
 		whereClause := strings.Join(conditions, " AND ")
-		query = "SELECT * FROM occupancy WHERE " + whereClause + " ORDER BY event_date"
-		rows, err = db.Query(query, args...)
+		query = "SELECT id, worker_id, event_date::text, note FROM occupancy WHERE " + whereClause + " ORDER BY event_date"
+		rows, err = queryDB(db, query, args...)
 	}
 
 	if err != nil {
@@ -136,7 +133,7 @@ func RemoveOccupancy(c *gin.Context, db *sql.DB) {
 	}
 
 	query := "DELETE FROM occupancy WHERE id = ?"
-	result, err := db.Exec(query, id)
+	result, err := execDB(db, query, id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in deleting occupancy\n" + err.Error()})
@@ -160,15 +157,15 @@ func RemoveOccupancy(c *gin.Context, db *sql.DB) {
 func EmptyOccupancies(c *gin.Context, db *sql.DB) {
 	query1 := `DELETE FROM occupancy`
 
-	_, err1 := db.Exec(query1)
+	_, err1 := execDB(db, query1)
 
 	if err1 != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in clearing table\n" + err1.Error()})
 		return
 	}
 
-	query2 := "ALTER TABLE occupancy AUTO_INCREMENT = 1"
-	_, err2 := db.Exec(query2)
+	query2 := "ALTER SEQUENCE occupancy_id_seq RESTART WITH 1"
+	_, err2 := execDB(db, query2)
 
 	if err2 != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while reseting autoincrement\n" + err2.Error()})

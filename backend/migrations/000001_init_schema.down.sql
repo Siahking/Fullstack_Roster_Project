@@ -8,3 +8,5 @@ DROP TABLE IF EXISTS worker_locations;
 DROP TABLE IF EXISTS workers;
 DROP TABLE IF EXISTS locations;
 DROP TABLE IF EXISTS user_accounts;
+DROP TYPE IF EXISTS day_of_week_enum;
+DROP TYPE IF EXISTS availability_enum;

@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -39,14 +38,12 @@ func CreateAccount(c *gin.Context, db *sql.DB) {
 
 	query := "INSERT INTO user_accounts (username,password) VALUES (?,?)"
 
-	_, insertionErr := db.Exec(query, account.Username, string(encryptedPassword))
+	_, insertionErr := execDB(db, query, account.Username, string(encryptedPassword))
 
 	if insertionErr != nil {
-		if mysqlErr, ok := insertionErr.(*mysql.MySQLError); ok {
-			if mysqlErr.Number == 1062 {
-				c.JSON(http.StatusConflict, gin.H{"error": "An account with this username already exists"})
-				return
-			}
+		if hasPostgresCode(insertionErr, pgUniqueViolation) {
+			c.JSON(http.StatusConflict, gin.H{"error": "An account with this username already exists"})
+			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in creating account: " + insertionErr.Error()})
 		return
@@ -61,7 +58,7 @@ func RetrieveAccounts(db *sql.DB, username string) (*Account, error) {
 	}
 
 	query := "SELECT * FROM user_accounts WHERE username = ?"
-	row := db.QueryRow(query, username)
+	row := queryRowDB(db, query, username)
 
 	var account Account
 	err := row.Scan(&account.AccountID, &account.Username, &account.Password)
@@ -80,7 +77,7 @@ func FindAccount(c *gin.Context, db *sql.DB) {
 
 	query := `SELECT * FROM user_accounts WHERE username = ?`
 
-	rows, err := db.Query(query, username)
+	rows, err := queryDB(db, query, username)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in query execution\n" + err.Error()})
@@ -145,7 +142,7 @@ func EditAccount(c *gin.Context, db *sql.DB) {
 		WHERE account_id = ?
 	`
 
-	result, err := db.Exec(query, account.Username, account.Password, id)
+	result, err := execDB(db, query, account.Username, account.Password, id)
 
 	if err != nil {
 		return
@@ -171,10 +168,10 @@ func DeleteAccount(c *gin.Context, db *sql.DB) {
 
 	if accountId != "" {
 		query = baseString + "account_id = ?"
-		result, err = db.Exec(query, accountId)
+		result, err = execDB(db, query, accountId)
 	} else if username != "" {
 		query = baseString + "username = ?"
-		result, err = db.Exec(query, username)
+		result, err = execDB(db, query, username)
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid params"})
 		return

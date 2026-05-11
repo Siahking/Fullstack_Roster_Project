@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"final-project/models"
@@ -11,7 +12,8 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	_ "github.com/go-sql-driver/mysql"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -45,6 +47,12 @@ func main() {
 	//get routes
 	models.RegisterRoutes(router, db)
 
-	fmt.Println("Starting Gin server on :8080")
-	log.Fatal(router.Run(":8080"))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	fmt.Printf("Starting Gin server on :%s\n", port)
+
+	log.Fatal(router.Run(":" + port))
 }

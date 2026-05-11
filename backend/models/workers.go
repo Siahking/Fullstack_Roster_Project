@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-sql-driver/mysql"
 )
 
 type Worker struct {
@@ -20,7 +19,7 @@ type Worker struct {
 	Address      *string  `json:"address"`
 	Contact      *string  `json:"contact"`
 	Age          *int     `json:"age"`
-	ID_Number    *int     `json:"id_number"`
+	ID_Number    *int64   `json:"id_number"`
 	Availability *string  `json:"availability"`
 	Hours        []string `json:"hours"`
 }
@@ -45,17 +44,15 @@ func AddWorker(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	query := "INSERT INTO workers (first_name, last_name, middle_name,gender,address,contact, age, id_number,availability,hours)VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	query := "INSERT INTO workers (first_name, last_name, middle_name,gender,address,contact, age, id_number,availability,hours)VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?::availability_enum, ?::jsonb)"
 
-	_, insertionErr := db.Exec(query, worker.FirstName, worker.LastName, worker.MiddleName,
+	_, insertionErr := execDB(db, query, worker.FirstName, worker.LastName, worker.MiddleName,
 		worker.Gender, worker.Address, worker.Contact, worker.Age, worker.ID_Number, worker.Availability, string(hoursJSON))
 
 	if insertionErr != nil {
-		if mysqlErr, ok := insertionErr.(*mysql.MySQLError); ok {
-			if mysqlErr.Number == 1062 {
-				c.JSON(http.StatusConflict, gin.H{"error": "Worker with this ID Number already exists"})
-				return
-			}
+		if hasPostgresCode(insertionErr, pgUniqueViolation) {
+			c.JSON(http.StatusConflict, gin.H{"error": "Worker with this ID Number already exists"})
+			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in adding values to the db: " + insertionErr.Error()})
 		return
@@ -79,28 +76,28 @@ func FindWorker(c *gin.Context, db *sql.DB) {
 
 	if id != "" {
 		query = baseString + "id = ?"
-		rows, err = db.Query(query, id)
+		rows, err = queryDB(db, query, id)
 	} else if id_number != "" {
 		query = baseString + "id_number = ?"
-		rows, err = db.Query(query, id_number)
+		rows, err = queryDB(db, query, id_number)
 	} else if firstname != "" && lastname != "" && middlename != "" {
 		query = baseString + "first_name LIKE ? AND last_name LIKE ? AND middle_name LIKE ?"
-		rows, err = db.Query(query, "%"+firstname+"%", "%"+lastname+"%", "%"+middlename+"%")
+		rows, err = queryDB(db, query, "%"+firstname+"%", "%"+lastname+"%", "%"+middlename+"%")
 	} else if firstname != "" && middlename != "" {
 		query = baseString + "first_name LIKE ? AND middle_name LIKE ?"
-		rows, err = db.Query(query, "%"+firstname+"%", "%"+middlename+"%")
+		rows, err = queryDB(db, query, "%"+firstname+"%", "%"+middlename+"%")
 	} else if lastname != "" && middlename != "" {
 		query = baseString + "last_name LIKE ? AND middle_name LIKE ?"
-		rows, err = db.Query(query, "%"+lastname+"%")
+		rows, err = queryDB(db, query, "%"+lastname+"%", "%"+middlename+"%")
 	} else if firstname != "" {
 		query = baseString + "first_name LIKE ?"
-		rows, err = db.Query(query, "%"+firstname+"%")
+		rows, err = queryDB(db, query, "%"+firstname+"%")
 	} else if lastname != "" {
 		query = baseString + "last_name LIKE ?"
-		rows, err = db.Query(query, "%"+lastname+"%")
+		rows, err = queryDB(db, query, "%"+lastname+"%")
 	} else if middlename != "" {
 		query = baseString + "middle_name LIKE ?"
-		rows, err = db.Query(query, "%"+middlename+"%")
+		rows, err = queryDB(db, query, "%"+middlename+"%")
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Please provide valid search parameters"})
 		return
@@ -153,7 +150,7 @@ func FindWorker(c *gin.Context, db *sql.DB) {
 
 // retrieve all workers
 func GetWorkers(c *gin.Context, db *sql.DB) {
-	rows, err := db.Query("SELECT * FROM workers")
+	rows, err := queryDB(db, "SELECT * FROM workers")
 
 	if err != nil {
 		log.Println("DB Query Error:", err)
@@ -224,7 +221,7 @@ func EditWorker(c *gin.Context, db *sql.DB) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to convert hours to JSON: \n" + err.Error()})
 			return
 		}
-		hoursJSON = value
+		hoursJSON = string(value)
 	}
 
 	query := `UPDATE workers SET
@@ -236,24 +233,21 @@ func EditWorker(c *gin.Context, db *sql.DB) {
 			contact = COALESCE(?, contact),
 			age = COALESCE(?, age),
 			id_number = COALESCE(?, id_number),
-			availability = COALESCE(?, availability),
-			hours = COALESCE(?, hours) 
+			availability = COALESCE(?::availability_enum, availability),
+			hours = COALESCE(?::jsonb, hours)
 			WHERE id = ?`
 
-	result, err := db.Exec(query, worker.FirstName, worker.LastName, worker.MiddleName, worker.Gender,
+	result, err := execDB(db, query, worker.FirstName, worker.LastName, worker.MiddleName, worker.Gender,
 		worker.Address, worker.Contact, worker.Age, worker.ID_Number, worker.Availability,
 		hoursJSON, id)
 
 	if err != nil {
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			if mysqlErr.Number == 1062 {
-				c.JSON(http.StatusConflict, gin.H{"error": "Worker with this id number already exists"})
-				return
-			}
-		} else {
-			c.JSON(http.StatusConflict, gin.H{"error": "Unknown error occured"})
+		if hasPostgresCode(err, pgUniqueViolation) {
+			c.JSON(http.StatusConflict, gin.H{"error": "Worker with this id number already exists"})
 			return
 		}
+		c.JSON(http.StatusConflict, gin.H{"error": "Unknown error occured"})
+		return
 	}
 
 	rowsAffected, _ := result.RowsAffected()

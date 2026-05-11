@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-sql-driver/mysql"
 )
 
 type DaysOff struct {
@@ -51,18 +50,16 @@ func AddDaysOff(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	query := "INSERT INTO days_off (worker_id,start_date,end_date) VALUES (?,?,?)"
-	_, err := db.Exec(query, daysOff.WorkerId, *daysOff.StartDate, *daysOff.EndDate)
+	query := "INSERT INTO days_off (worker_id,start_date,end_date) VALUES (?,?::date,?::date)"
+	_, err := execDB(db, query, daysOff.WorkerId, *daysOff.StartDate, *daysOff.EndDate)
 
 	if err != nil {
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			if mysqlErr.Number == 1062 {
-				c.JSON(http.StatusConflict, gin.H{"error": "This temporary leave for this worker already exists"})
-				return
-			} else if mysqlErr.Number == 1452 {
-				c.JSON(http.StatusConflict, gin.H{"error": "This worker does not exist"})
-				return
-			}
+		if hasPostgresCode(err, pgUniqueViolation) {
+			c.JSON(http.StatusConflict, gin.H{"error": "This temporary leave for this worker already exists"})
+			return
+		} else if hasPostgresCode(err, pgForeignKeyViolation) {
+			c.JSON(http.StatusConflict, gin.H{"error": "This worker does not exist"})
+			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in inserting values\n" + err.Error()})
 		return
@@ -80,13 +77,13 @@ func GetDaysOff(c *gin.Context, db *sql.DB) {
 	value := c.Param("value")
 
 	if column == "" {
-		rows, err = db.Query("SELECT * FROM days_off")
+		rows, err = queryDB(db, "SELECT break_id, worker_id, start_date::text, end_date::text FROM days_off")
 	} else if column == "worker_id" {
-		query := "SELECT * FROM days_off WHERE worker_id = ?"
-		rows, err = db.Query(query, value)
+		query := "SELECT break_id, worker_id, start_date::text, end_date::text FROM days_off WHERE worker_id = ?"
+		rows, err = queryDB(db, query, value)
 	} else if column == "break_id" {
-		query := "SELECT * FROM days_off WHERE break_id = ?"
-		rows, err = db.Query(query, value)
+		query := "SELECT break_id, worker_id, start_date::text, end_date::text FROM days_off WHERE break_id = ?"
+		rows, err = queryDB(db, query, value)
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid column entry"})
 		return
@@ -130,7 +127,7 @@ func RemoveDaysOff(c *gin.Context, db *sql.DB) {
 
 	query := "DELETE FROM days_off WHERE break_id = ?"
 
-	result, err := db.Exec(query, id)
+	result, err := execDB(db, query, id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in performing query" + err.Error()})
@@ -175,24 +172,22 @@ func EditDayOff(c *gin.Context, db *sql.DB) {
 
 	query := `UPDATE days_off SET
 			worker_id = COALESCE(?, worker_id),
-			start_date = COALESCE(?, start_date),
-			end_date = COALESCE(?, end_date)
+			start_date = COALESCE(?::date, start_date),
+			end_date = COALESCE(?::date, end_date)
 			WHERE break_id = ?`
 
-	result, err := db.Exec(query, dayOff.WorkerId, dayOff.StartDate, dayOff.EndDate, id)
+	result, err := execDB(db, query, dayOff.WorkerId, dayOff.StartDate, dayOff.EndDate, id)
 
 	if err != nil {
 		var errMsg string
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			switch mysqlErr.Number {
-			case 1452:
-				errMsg = "Worker with this ID does not exist"
-			case 3819:
-				errMsg = "End Date must be after Start Date and Start Date Must be After the End Date"
-			case 1062:
-				errMsg = "Duplicate Entry, a constraint with this ID Number already exists"
-			}
-		} else {
+		switch {
+		case hasPostgresCode(err, pgForeignKeyViolation):
+			errMsg = "Worker with this ID does not exist"
+		case hasPostgresCode(err, pgCheckViolation):
+			errMsg = "End Date must be after Start Date and Start Date Must be After the End Date"
+		case hasPostgresCode(err, pgUniqueViolation):
+			errMsg = "Duplicate Entry, a constraint with this ID Number already exists"
+		default:
 			errMsg = "Unknown error occurred"
 		}
 		c.JSON(http.StatusConflict, gin.H{"error": errMsg})

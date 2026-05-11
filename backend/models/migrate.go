@@ -7,14 +7,14 @@ import (
 	"path/filepath"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/mysql"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func RunMigrations(dsn string) {
 	m, err := migrate.New(
 		migrationFileURL(),
-		"mysql://"+dsn,
+		dsn,
 	)
 	if err != nil {
 		log.Fatal(err)

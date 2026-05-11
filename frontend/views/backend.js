@@ -102,7 +102,7 @@ export async function editWorker(
     gender = gender ? gender : null
     address = address ? address : null
     contact = contact ? contact : null
-    id_number = id_number ? id_number : null
+    id_number = id_number ? Number(id_number) : null
     availability = availability ?availability : null
     hours = hours ? hours : null
 

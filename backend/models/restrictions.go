@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-sql-driver/mysql"
 )
 
 type PermanentRestriction struct {
@@ -57,21 +56,19 @@ func CreatePermanentRestriction(c *gin.Context, db *sql.DB) {
 		endTimeSQL = sql.NullString{Valid: false}
 	}
 
-	query := "INSERT INTO permanent_restrictions (worker_id,day_of_week,start_time,end_time) VALUES (?,?,?,?)"
-	_, err := db.Exec(query, permanentRestriction.WorkerId, dayOfWeek, startTimeSQL, endTimeSQL)
+	query := "INSERT INTO permanent_restrictions (worker_id,day_of_week,start_time,end_time) VALUES (?,?::day_of_week_enum,?::time,?::time)"
+	_, err := execDB(db, query, permanentRestriction.WorkerId, dayOfWeek, startTimeSQL, endTimeSQL)
 
 	if err != nil {
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			if mysqlErr.Number == 1062 {
-				c.JSON(http.StatusConflict, gin.H{"error": "The restriction for this worker already exists or this worker already has a restriction for this day"})
-				return
-			} else if mysqlErr.Number == 1452 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "This worker does not exist"})
-				return
-			} else if mysqlErr.Number == 1265 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Day of Week"})
-				return
-			}
+		if hasPostgresCode(err, pgUniqueViolation) {
+			c.JSON(http.StatusConflict, gin.H{"error": "The restriction for this worker already exists or this worker already has a restriction for this day"})
+			return
+		} else if hasPostgresCode(err, pgForeignKeyViolation) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "This worker does not exist"})
+			return
+		} else if hasPostgresCode(err, pgInvalidText) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Day of Week"})
+			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert values due to error\n" + err.Error()})
 		return
@@ -83,7 +80,7 @@ func CreatePermanentRestriction(c *gin.Context, db *sql.DB) {
 // retrieve all permanent restrictions
 func GetRestrictions(c *gin.Context, db *sql.DB) {
 	var restrictions []PermanentRestriction
-	rows, err := db.Query("SELECT id,worker_id,day_of_week,start_time,end_time FROM permanent_restrictions")
+	rows, err := queryDB(db, "SELECT id, worker_id, day_of_week, start_time::text, end_time::text FROM permanent_restrictions")
 
 	if err != nil {
 		log.Println("DB Query Error:", err)
@@ -121,8 +118,8 @@ func FindRestriction(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	query := fmt.Sprintf("SELECT id,worker_id,day_of_week,start_time,end_time FROM permanent_restrictions WHERE %s = ?", column)
-	rows, err := db.Query(query, id)
+	query := fmt.Sprintf("SELECT id, worker_id, day_of_week, start_time::text, end_time::text FROM permanent_restrictions WHERE %s = ?", column)
+	rows, err := queryDB(db, query, id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in extracting values"})
@@ -162,7 +159,7 @@ func DeleteRestriction(c *gin.Context, db *sql.DB) {
 	}
 
 	query := "DELETE FROM permanent_restrictions WHERE id = ?"
-	result, err := db.Exec(query, id)
+	result, err := execDB(db, query, id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in deleting restriction"})
@@ -200,57 +197,54 @@ func EditRestriction(c *gin.Context, db *sql.DB) {
 	if *restriction.StartTime == "99:99:99" && *restriction.EndTime == "99:99:99" {
 		query = `UPDATE permanent_restrictions SET 
 				worker_id = COALESCE(?, worker_id),
-				day_of_week = COALESCE(?, day_of_week),
+				day_of_week = COALESCE(?::day_of_week_enum, day_of_week),
 				start_time = NULL,end_time = NULL WHERE id = ?`
 
-		result, err = db.Exec(query, restriction.WorkerId, restriction.DayOfWeek, id)
+		result, err = execDB(db, query, restriction.WorkerId, restriction.DayOfWeek, id)
 	} else {
 		if *restriction.StartTime == "99:99:99" {
 			query = `UPDATE permanent_restrictions SET 
 					worker_id = COALESCE(?, worker_id),
-					day_of_week = COALESCE(?, day_of_week),
+					day_of_week = COALESCE(?::day_of_week_enum, day_of_week),
 					start_time = NULL,
-					end_time = COALESCE(?, end_time)
+					end_time = COALESCE(?::time, end_time)
 					WHERE id = ?`
 
-			result, err = db.Exec(query, restriction.WorkerId, restriction.DayOfWeek, restriction.EndTime, id)
+			result, err = execDB(db, query, restriction.WorkerId, restriction.DayOfWeek, restriction.EndTime, id)
 		} else if *restriction.EndTime == "99:99:99" {
 			query = `UPDATE permanent_restrictions SET 
 					worker_id = COALESCE(?, worker_id),
-					day_of_week = COALESCE(?, day_of_week),
-					start_time = COALESCE(?, start_time),
+					day_of_week = COALESCE(?::day_of_week_enum, day_of_week),
+					start_time = COALESCE(?::time, start_time),
 					end_time = NULL WHERE id = ?`
 
-			result, err = db.Exec(query, restriction.WorkerId, restriction.DayOfWeek, restriction.StartTime, id)
+			result, err = execDB(db, query, restriction.WorkerId, restriction.DayOfWeek, restriction.StartTime, id)
 		} else {
 			query = `UPDATE permanent_restrictions SET 
 				worker_id = COALESCE(?, worker_id),
-				day_of_week = COALESCE(?, day_of_week),
-				start_time = COALESCE(?, start_time),
-				end_time = COALESCE(?, end_time)
+				day_of_week = COALESCE(?::day_of_week_enum, day_of_week),
+				start_time = COALESCE(?::time, start_time),
+				end_time = COALESCE(?::time, end_time)
 				WHERE id = ?`
 
-			result, err = db.Exec(query, restriction.WorkerId, restriction.DayOfWeek, restriction.StartTime, restriction.EndTime, id)
+			result, err = execDB(db, query, restriction.WorkerId, restriction.DayOfWeek, restriction.StartTime, restriction.EndTime, id)
 		}
 	}
 
 	if err != nil {
-
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			switch mysqlErr.Number {
-			case 1265:
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid day value for day of the week field"})
-				return
-			case 1292:
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid time value for start time or end time"})
-				return
-			case 3819:
-				c.JSON(http.StatusBadRequest, gin.H{"error": "End Time must always be Later than the Start Time"})
-				return
-			default:
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error \n" + err.Error()})
-				return
-			}
+		switch {
+		case hasPostgresCode(err, pgInvalidText):
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid day value for day of the week field"})
+			return
+		case hasPostgresCode(err, pgInvalidDatetimeFormat, pgDatetimeFieldOverflow):
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid time value for start time or end time"})
+			return
+		case hasPostgresCode(err, pgCheckViolation):
+			c.JSON(http.StatusBadRequest, gin.H{"error": "End Time must always be Later than the Start Time"})
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error \n" + err.Error()})
+			return
 		}
 	}
 

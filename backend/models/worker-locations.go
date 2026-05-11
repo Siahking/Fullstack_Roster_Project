@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"github.com/gin-gonic/gin"
-	"github.com/go-sql-driver/mysql"
 	"net/http"
 	"strconv"
 	"strings"
@@ -34,16 +33,14 @@ func AssignWorkerToLocation(c *gin.Context, db *sql.DB) {
 	}
 
 	query := "INSERT INTO worker_locations (worker_id,location_id) VALUES (?,?)"
-	_, err := db.Exec(query, workerId, locationId)
+	_, err := execDB(db, query, workerId, locationId)
 	if err != nil {
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			if mysqlErr.Number == 1062 {
-				c.JSON(http.StatusConflict, gin.H{"error": "Worker Location link already exists"})
-				return
-			} else if mysqlErr.Number == 1452 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
-				return
-			}
+		if hasPostgresCode(err, pgUniqueViolation) {
+			c.JSON(http.StatusConflict, gin.H{"error": "Worker Location link already exists"})
+			return
+		} else if hasPostgresCode(err, pgForeignKeyViolation) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert value\n" + err.Error()})
 		return
@@ -74,7 +71,7 @@ func GetWorkerLocationConnections(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	rows, err := db.Query(query, value)
+	rows, err := queryDB(db, query, value)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get values from the database\n" + err.Error()})
 		return
@@ -112,16 +109,16 @@ func RemoveConnection(c *gin.Context, db *sql.DB) {
 
 	if Id != "" {
 		query = "DELETE FROM worker_locations WHERE id = ?"
-		result, err = db.Exec(query, Id)
+		result, err = execDB(db, query, Id)
 	} else if workerID != "" && locationID != "" {
 		query = "DELETE FROM worker_locations WHERE worker_id = ? AND location_id = ?"
-		result, err = db.Exec(query, workerID, locationID)
+		result, err = execDB(db, query, workerID, locationID)
 	} else if workerID != "" {
 		query = "DELETE FROM worker_locations WHERE worker_id = ?"
-		result, err = db.Exec(query, workerID)
+		result, err = execDB(db, query, workerID)
 	} else if locationID != "" {
 		query = "DELETE FROM worker_locations WHERE location_id = ?"
-		result, err = db.Exec(query, locationID)
+		result, err = execDB(db, query, locationID)
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid column input"})
 		return
@@ -166,17 +163,15 @@ func EditConnection(c *gin.Context, db *sql.DB) {
 			location_id = COALESCE(?, location_id)
 			WHERE id = ?`
 
-	result, err := db.Exec(query, connection.WorkerID, connection.LocationID, id)
+	result, err := execDB(db, query, connection.WorkerID, connection.LocationID, id)
 	if err != nil {
 		var errMsg string
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			switch mysqlErr.Number {
-			case 1452:
-				errMsg = "Worker or Location with this ID does not exist"
-			case 1062:
-				errMsg = "Duplicate Entry, a connection with this worker and location params already exists"
-			}
-		} else {
+		switch {
+		case hasPostgresCode(err, pgForeignKeyViolation):
+			errMsg = "Worker or Location with this ID does not exist"
+		case hasPostgresCode(err, pgUniqueViolation):
+			errMsg = "Duplicate Entry, a connection with this worker and location params already exists"
+		default:
 			errMsg = "Unknown error occurred"
 		}
 		c.JSON(http.StatusConflict, gin.H{"error": errMsg})
