@@ -8,6 +8,7 @@ async function apiRequest(endpoint, method = "GET", body = null){
     const options = {
         method,
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
     };
 
     if (body){
@@ -80,7 +81,7 @@ export async function findWorker(firstName="",lastName="",middleName="",idNumber
         if (middleName) url.searchParams.append("middle_name", middleName);
     };
 
-    const response = await fetch(url)
+    const response = await fetch(url, { credentials: "include" })
     const data = await response.json()
 
     return data
@@ -212,7 +213,7 @@ export async function getConstraints(
             url.searchParams.append("worker2_lastname",worker2LastName)
         }
     }
-    result = await fetch(url)
+    result = await fetch(url, { credentials: "include" })
     const data = await result.json()
 
     return data
@@ -285,7 +286,7 @@ export async function getDaysOff(column="",value=""){
         url = `${BASEURL}get-days-off`
     }
 
-    const results = await fetch(url)
+    const results = await fetch(url, { credentials: "include" })
     const data = await results.json()
 
     return data
