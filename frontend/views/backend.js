@@ -1,6 +1,6 @@
 import { objectCheck } from "./general-helper-funcs.js";
 
-const BASEURL = "http://localhost:8080/"
+const BASEURL = "https://optiroster.onrender.com/"
 
 //function to manage general api calls
 async function apiRequest(endpoint, method = "GET", body = null){
