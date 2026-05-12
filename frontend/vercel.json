@@ -1,5 +1,20 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/html/login.html" }
+    { "source": "/", "destination": "/html/login.html" },
+    { "source": "/login", "destination": "/html/login.html" },
+    { "source": "/home", "destination": "/html/home.html" },
+    { "source": "/get-workers", "destination": "/html/workers.html" },
+    { "source": "/find-workers", "destination": "/html/find-workers.html" },
+    { "source": "/get-locations", "destination": "/html/locations.html" },
+    { "source": "/find-locations", "destination": "/html/find-locations.html" },
+    { "source": "/constraints", "destination": "/html/constraints.html" },
+    { "source": "/find-contraints", "destination": "/html/find-constraints.html" },
+    { "source": "/find-constraints", "destination": "/html/find-constraints.html" },
+    { "source": "/days-off", "destination": "/html/days-off.html" },
+    { "source": "/find-days-off", "destination": "/html/find-days-off.html" },
+    { "source": "/find-restrictions", "destination": "/html/find-restrictions.html" },
+    { "source": "/create-roster", "destination": "/html/create-roster.html" },
+    { "source": "/find-rosters", "destination": "/html/find-rosters.html" },
+    { "source": "/account-info", "destination": "/html/account-info.html" }
   ]
 }
