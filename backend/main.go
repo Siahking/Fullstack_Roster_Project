@@ -33,12 +33,18 @@ func main() {
 
 	//Initialize sessions
 	store := cookie.NewStore([]byte("super-secret-key"))
+	secureCookie := os.Getenv("COOKIE_SECURE") == "true"
+	sameSite := http.SameSiteLaxMode
+	if secureCookie {
+		sameSite = http.SameSiteNoneMode
+	}
+
 	store.Options(sessions.Options{
 		Path:     "/",
 		MaxAge:   86400,
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
+		Secure:   secureCookie,
+		SameSite: sameSite,
 	})
 	router.Use(sessions.Sessions("roster-session", store))
 

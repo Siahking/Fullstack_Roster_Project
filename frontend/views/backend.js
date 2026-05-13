@@ -1,6 +1,9 @@
 import { objectCheck } from "./general-helper-funcs.js";
 
-const BASEURL = "https://optiroster.onrender.com/"
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1"]);
+const BASEURL = LOCAL_HOSTS.has(window.location.hostname)
+    ? `${window.location.origin}/`
+    : "https://optiroster.onrender.com/";
 
 //function to manage general api calls
 async function apiRequest(endpoint, method = "GET", body = null){
