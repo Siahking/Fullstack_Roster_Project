@@ -19,11 +19,8 @@ export function toggleDiv(itemId) {
     usernameInput.value = "";
     passwordInput.value = "";
 
-    if (newMode === "login") {
-        passwordInput.setAttribute("type", "password");
-    } else {
-        passwordInput.setAttribute("type", "text");
-    }
+    passwordInput.setAttribute("type", "password");
+    container.dataset.mode = newMode;
 
     currentMode = newMode;
 }

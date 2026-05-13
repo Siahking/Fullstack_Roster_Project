@@ -55,18 +55,18 @@
         <button id="logout" class="grey-btn">Logout</button>
     </div>
 
-    <form id="edit-options-container" class="hidden">
+    <form id="edit-options-container" class="hidden" autocomplete="off">
       <label for="new-username">
           New Username
-          <input type="text" id="new-username" placeholder="Type Here" autocomplete="new-password">
+          <input type="text" id="new-username" name="account-user-entry" placeholder="Type Here" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-form-type="other">
       </label>
       <label for="new-password">
           New Password
-          <input type="text" id="new-password" placeholder="Type Here" autocomplete="new-password">
+          <input type="password" id="new-password" name="account-pass-entry" placeholder="Type Here" autocomplete="new-password" autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-form-type="other">
       </label>
       <label for="confirm-password" id="confirmation-label" class="hidden">
         Confirm Password
-        <input type="text" id="confirm-password" placeholder="Type here" autocomplete="new-password">
+        <input type="password" id="confirm-password" name="account-pass-confirm-entry" placeholder="Type here" autocomplete="new-password" autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-form-type="other">
       </label>
       <button id="save-new-info" type="submit" class="green-btn">Save</button>
     </form>

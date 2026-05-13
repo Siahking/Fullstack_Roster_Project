@@ -26,11 +26,11 @@
             Sign Up
         </button>
     </div>
-    <form id="info-container" class="hidden">
+    <form id="info-container" class="hidden" autocomplete="off">
         <label for="username">Username</label>
-        <input type="text" id="username" placeholder="Type here" autocorrect="off" name="fake-email" autocomplete="new-password">
+        <input type="text" id="username" name="login-user-entry" placeholder="Type here" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-form-type="other">
         <label for="password">Password</label>
-        <input type="text" id="password" placeholder="Type here" autocorrect="off" autocomplete="new-password">
+        <input type="password" id="password" name="login-pass-entry" placeholder="Type here" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-form-type="other">
         <button id="submit-button">Submit</button>
     </form>
     <script type="module" src="../views/login/frontend.js"></script>

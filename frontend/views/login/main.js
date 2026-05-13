@@ -29,7 +29,7 @@ signupBtn.addEventListener("click",()=>{
 form.addEventListener("submit",(event)=>{
     event.preventDefault()
 
-    if (passwordTag.type === "password"){
+    if (form.dataset.mode === "login"){
         checkCredentials(usernameTag.value,passwordTag.value)
     }else{
         storeCredentials(usernameTag.value,passwordTag.value)
