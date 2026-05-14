@@ -1,17 +1,14 @@
 {
     "sqltools.connections": [
         {
-            "mysqlOptions": {
-                "authProtocol": "default",
-                "enableSsl": "Disabled"
-            },
             "previewLimit": 50,
             "server": "localhost",
-            "port": 3306,
-            "driver": "MySQL",
-            "name": "FinalProject",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "FinalProject PostgreSQL",
             "database": "roster",
-            "username": "root"
+            "username": "appuser",
+            "askForPassword": true
         }
     ],
     "liveServer.settings.port": 5501

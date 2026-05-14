@@ -1,172 +1,150 @@
-# OVERVIEW
+# OPTIROSTER
 
-## Purpose  
-At my workplace, roster creation has consistently faced challenges. Workers were often scheduled on days they had requested off, shifts frequently overlapped- resulting in overstaffing at some locations or assigning the same person to multiple locations on the same day. Additionally, rosters were often released late due to managerial workload, disrupting employees’ personal plans. To address this, I built a system to manage workers, locations, constraints and availability, and to automatically generate accurate rosters, minimisng human error and improving scheduling efficiency.
+## Overview
 
-## Project Overview  
-OPTIROSTER is a full stack project developed entirely from scratch.It utilises CRUD API requests to manage and store data related to workers, locations, days off, worker constraints, permanent restrictions, and occupancies in a MySQL database. This data is then compiled to automatically generate rosters that assign workers to shifts while honoring their availability and restrictions.
+OPTIROSTER is a full-stack roster management application built with Go, PostgreSQL, HTML, CSS, and vanilla JavaScript. It manages workers, locations, days off, worker constraints, permanent restrictions, occupancies, and saved rosters.
 
-## Technologies Used  
- - Frontend:        HTML, CSS,Vanilla Javascript
- - Backend:         Go(Golang)
- - Database:        MySQL
- - APIS:            Custom REST API
- - Architecture:    MVC inspired project structure
+The goal is to reduce scheduling mistakes by automatically generating rosters that respect worker availability, requested days off, permanent restrictions, existing occupancies, and worker constraints.
 
-## Getting Started
-Follow these steps to set up the project locally:
+## Technologies
 
-### 1. Clone the repository 
-```bash
-git clone https://github.com/Siahking/Software-development-Final-Project--incomplete.git
-cd Software-development-Final-Project--incomplete
+- Frontend: HTML, CSS, vanilla JavaScript
+- Backend: Go with Gin
+- Database: PostgreSQL
+- Migrations: golang-migrate
+- Authentication/session storage: Gin sessions
+
+## Project Structure
+
+```text
+backend/
+  main.go
+  migrations/
+  models/
+frontend/
+  css/
+  html/
+  views/
+.vscode/
+  settings.json
 ```
----
 
-## 2. Create a `.env` file in the project root(the same folder as `main.go`) with the following content:
+## Requirements
+
+- Go 1.24 or newer
+- PostgreSQL
+- Optional: Node.js/npm if you want to use the frontend `npm run dev` helper
+- Optional: VS Code SQLTools with the PostgreSQL driver extension
+
+## Database Setup
+
+Create a PostgreSQL database and user that match your local `.env` file. Example:
+
+```sql
+CREATE USER appuser WITH PASSWORD 'your_password_here';
+CREATE DATABASE roster OWNER appuser;
+```
+
+The app runs migrations automatically on startup from `backend/migrations`.
+
+## Environment Variables
+
+Create `backend/.env` in the same folder as `backend/main.go`:
 
 ```env
 DB_USER=appuser
-DB_PASSWORD=R0sterPr0jectDatabase
+DB_PASSWORD=your_password_here
 DB_NAME=roster
 DB_HOST=127.0.0.1
-DB_PORT=3306
+DB_PORT=5432
+DB_SSLMODE=disable
+PORT=8080
+COOKIE_SECURE=false
 ```
 
-Do not commit your `.env` file to Github.
+Use `DB_SSLMODE=require` only when connecting to a hosted PostgreSQL database that requires SSL. Do not commit your real `.env` file.
 
-(Optional best practice: include a `.env.example` file in the repository with placeholder values.)
+## Running Locally
 
----
-
-## 3. Install Dependecies
+From the backend folder:
 
 ```bash
+cd backend
 go mod tidy
+go run .
 ```
 
----
-
-## 4. Ensure MySQL Is Running
-- Make sure mySQL is installed and running.
-- Ensure the database defined in `DB_NAME` exists.
-- The user defined in `DB_USER` must have proper priviledges.
-
----
-
-## 5. Run the Application
+Or from the frontend folder, using the helper script:
 
 ```bash
-go run main.go
+cd frontend
+npm install
+npm run dev
 ```
 
-The backend server will start on:
+The app runs at:
 
-```
+```text
 http://localhost:8080
 ```
 
----
+## VS Code Database Settings
 
-## Key Features  
- - Create update and delete workers and locations
- - Define days off, availably constraints and permanent time restrictions
- - Automatically generates rosters that:
-   - assign workers to shifts
-   - respect all defined unavailability rules
-   - detect and alert insufficient staffing 
- - dynamic frontend with real-time user feedback
- - Modular well organize codebase with clear separation of concerns
+`.vscode/settings.json` is configured for SQLTools using PostgreSQL:
 
-## Directory Structure  
- - **Css**
-   Contains all stylesheets, including a main file for shared styles across all pages.
+- Host: `localhost`
+- Port: `5432`
+- Database: `roster`
+- Username: `appuser`
+- Password: prompted by SQLTools
 
- - **Database**	
-   Includes the database schema used to define and structure data.
+Update those values if your local PostgreSQL user, database, host, or port are different.
 
- - **HTML**
-   Contains all HTML templates for rendering the user interface
+## Key Features
 
- - **Models**
-   Contains backend logic for database access and route definitions
+- Create, update, search, and delete workers
+- Create, update, search, and delete locations
+- Assign workers to locations
+- Define worker constraints so certain workers are not scheduled together
+- Add temporary days off
+- Add permanent weekly or time-based restrictions
+- Track occupancies so workers are not double-booked
+- Generate rosters while checking staffing availability
+- Save rosters and export roster PDFs
 
- - **Views**		
-   Handles all data processing logic and client data delivery. Includes shared helper utilities and feature-specific view logic.
+## Scheduling Rules
 
- - **Main.go**
-   The entry point for compiling and launching the backend server.
+Roster generation and availability checks consider:
 
-## Views
- - **Backend**	
-   Connects the client to the backend endpoints and performs error checking proper CRUD operations.
+- Worker availability and shift hours
+- Temporary days off
+- Permanent restrictions
+- Existing occupancies
+- Worker constraints
+- Minimum staffing requirements before days off or restrictions are accepted
 
- - **General helper funcs**	
-   Shared utility functions shared across multiple view modules.
+## Useful Commands
 
- - **Subdirectories in views**
-   Each feature based subdirectory (e.g workers, locations, etc) includes:
+Run backend tests:
 
-   - main.js		
-	Sets up event listeners for UI interactions like button clicks and form submissions.
+```bash
+cd backend
+go test ./...
+```
 
-   - frontend.js
-    Manages UI behaviour, such as showing/hiding elements or updating content dynamically.
+Check frontend JavaScript syntax:
 
-   - functions.js
-    Handles backend logic, including API communication and error handling.
+```bash
+node --check frontend/views/days-off/helper-functions.js
+```
 
- - **Roster module(example)**
-   - functions.js
-    Processes data from the backend and implements roster assignment logic
+## Main Pages
 
-   - frontend.js
-    Displays the calendar interface and populates it with shift data.
-
-## Webpages
- - **Create Roster**
-   Allows the user to select a future month, year, and location to dynamically generate a roster.
-
- - **Workers**
-   Displays all workers stored in the database,including their assigned locations.
-   Features:
-    - Add Worker
-        - Inputs:First name *(required)*, Middle Name, Last Name *(required)*,     Gender, Address *(required)*, Age *(required)*, Contact, ID Number *(required)*, Availability *(required)*,Assigned Locations *(required)*
-        - Creates a new worker entry.
-    - Find Worker
-        - Search by ID, ID Number, First Name, Last Name, or Middle Name
-
- - **Locations**
-   Displays all stored locations.
-   Features:
-    - Add Location
-        - Inputs:Location Name
-        - Creates a new location
-    - Find Location
-        - Search by location name
-
- - **Constraints**
-   Displays all stored worker constraints.
-   Features:
-    - Add Constraint
-        - Inputs: Worker 1 ID *(required)*, Worker 2 ID *(required)*, Summary
-        - Creates a new constraint indicating why the two workers shouldn't be scheduled together.
-    - Find Constraint
-        - Search using first/last name of Worker 1 and/or Worker 2
-    - Edit Constraint
-        - Inputs: Constraint ID, fields to be updated (Worker 1 ID, Worker 2 ID, or Summary)
-
- - **Days Off & Restrictions**
-   Displays both temporary and permanent days off.
-   Features:
-    - Add Days Off
-        - Inputs: Worker ID, Start Date, End Date
-        - Creates a temporary day-off record
-    - Find Days Off
-        - Search by Worker ID or Break ID
-    - Add Restriction
-        - Inputs: Worker ID, Day of Week, (Optional) Start Time, End Time
-        - Creates a permanent restriction
-    - Find Restriction
-        - Search by restriction ID or Worker ID.edit
-
+- Home: entry point after login
+- Workers: manage worker records and assigned locations
+- Locations: manage location records
+- Constraints: manage workers who should not be scheduled together
+- Days Off: manage temporary days off and permanent restrictions
+- Create Roster: generate rosters for selected locations/months
+- Find Rosters: view saved rosters
+- Account: manage account details
