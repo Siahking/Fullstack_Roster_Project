@@ -2,6 +2,13 @@ import { removeConstraint } from "../constraints/functions.js"
 
 const table = document.getElementById("table")
 
+function formatSummary(value){
+    if (!value || !value.trim()) return "---"
+
+    const trimmedValue = value.trim()
+    return trimmedValue.charAt(0).toUpperCase() + trimmedValue.slice(1)
+}
+
 export async function displayConstraints(){
     const constraints = JSON.parse(localStorage.getItem("Constraints"));
 
@@ -25,7 +32,7 @@ export async function displayConstraints(){
         IDData.innerText = constraint.id
         worker1Data.innerText = worker1Info
         worker2Data.innerText = worker2Info
-        summaryData.innerText = constraint.note
+        summaryData.innerText = formatSummary(constraint.note)
 
         for (const value of [IDData,worker1Data,worker2Data,summaryData]){
             tableRow.appendChild(value)

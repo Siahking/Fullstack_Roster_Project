@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
+	"unicode"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,6 +26,50 @@ type Worker struct {
 	Hours        []string `json:"hours"`
 }
 
+func formatWorkerText(value string) string {
+	words := strings.Fields(value)
+	for index, word := range words {
+		words[index] = formatWorkerWord(word)
+	}
+	return strings.Join(words, " ")
+}
+
+func formatWorkerWord(word string) string {
+	lowerWord := strings.ToLower(word)
+	runes := []rune(lowerWord)
+	if len(runes) == 0 || unicode.IsDigit(runes[0]) {
+		return lowerWord
+	}
+
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
+}
+
+func normalizeWorkerTextField(field **string) {
+	if *field == nil {
+		return
+	}
+
+	normalized := formatWorkerText(**field)
+	if normalized == "" {
+		*field = nil
+		return
+	}
+
+	*field = &normalized
+}
+
+func normalizeWorkerText(worker *Worker) {
+	normalizeWorkerTextField(&worker.FirstName)
+	normalizeWorkerTextField(&worker.LastName)
+	normalizeWorkerTextField(&worker.MiddleName)
+	normalizeWorkerTextField(&worker.Address)
+}
+
+func missingWorkerText(field *string) bool {
+	return field == nil || strings.TrimSpace(*field) == ""
+}
+
 // create a new worker
 func AddWorker(c *gin.Context, db *sql.DB) {
 	var worker Worker
@@ -32,8 +78,10 @@ func AddWorker(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	if *worker.FirstName == "" || *worker.LastName == "" || *worker.Address == "" ||
-		*worker.Age == 0 || *worker.ID_Number == 0 {
+	normalizeWorkerText(&worker)
+
+	if missingWorkerText(worker.FirstName) || missingWorkerText(worker.LastName) || missingWorkerText(worker.Address) ||
+		worker.Age == nil || *worker.Age == 0 || worker.ID_Number == nil || *worker.ID_Number == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing params"})
 		return
 	}
@@ -65,9 +113,9 @@ func AddWorker(c *gin.Context, db *sql.DB) {
 func FindWorker(c *gin.Context, db *sql.DB) {
 	baseString := "SELECT * FROM workers WHERE "
 	id := c.Query("id")
-	firstname := c.Query("first_name")
-	lastname := c.Query("last_name")
-	middlename := c.Query("middle_name")
+	firstname := formatWorkerText(c.Query("first_name"))
+	lastname := formatWorkerText(c.Query("last_name"))
+	middlename := formatWorkerText(c.Query("middle_name"))
 	id_number := c.Query("id_number")
 
 	var query string
@@ -81,22 +129,22 @@ func FindWorker(c *gin.Context, db *sql.DB) {
 		query = baseString + "id_number = ?"
 		rows, err = queryDB(db, query, id_number)
 	} else if firstname != "" && lastname != "" && middlename != "" {
-		query = baseString + "first_name LIKE ? AND last_name LIKE ? AND middle_name LIKE ?"
+		query = baseString + "LOWER(first_name) LIKE LOWER(?) AND LOWER(last_name) LIKE LOWER(?) AND LOWER(middle_name) LIKE LOWER(?)"
 		rows, err = queryDB(db, query, "%"+firstname+"%", "%"+lastname+"%", "%"+middlename+"%")
 	} else if firstname != "" && middlename != "" {
-		query = baseString + "first_name LIKE ? AND middle_name LIKE ?"
+		query = baseString + "LOWER(first_name) LIKE LOWER(?) AND LOWER(middle_name) LIKE LOWER(?)"
 		rows, err = queryDB(db, query, "%"+firstname+"%", "%"+middlename+"%")
 	} else if lastname != "" && middlename != "" {
-		query = baseString + "last_name LIKE ? AND middle_name LIKE ?"
+		query = baseString + "LOWER(last_name) LIKE LOWER(?) AND LOWER(middle_name) LIKE LOWER(?)"
 		rows, err = queryDB(db, query, "%"+lastname+"%", "%"+middlename+"%")
 	} else if firstname != "" {
-		query = baseString + "first_name LIKE ?"
+		query = baseString + "LOWER(first_name) LIKE LOWER(?)"
 		rows, err = queryDB(db, query, "%"+firstname+"%")
 	} else if lastname != "" {
-		query = baseString + "last_name LIKE ?"
+		query = baseString + "LOWER(last_name) LIKE LOWER(?)"
 		rows, err = queryDB(db, query, "%"+lastname+"%")
 	} else if middlename != "" {
-		query = baseString + "middle_name LIKE ?"
+		query = baseString + "LOWER(middle_name) LIKE LOWER(?)"
 		rows, err = queryDB(db, query, "%"+middlename+"%")
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Please provide valid search parameters"})
@@ -212,6 +260,8 @@ func EditWorker(c *gin.Context, db *sql.DB) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
+
+	normalizeWorkerText(&worker)
 
 	if worker.Hours == nil {
 		hoursJSON = nil

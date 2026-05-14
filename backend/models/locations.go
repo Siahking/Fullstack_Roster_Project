@@ -6,11 +6,31 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+	"unicode"
 )
 
 type Location struct {
 	ID       int     `json:"id"`
 	Location *string `json:"location"`
+}
+
+func formatLocationName(value string) string {
+	words := strings.Fields(value)
+	for index, word := range words {
+		words[index] = formatLocationWord(word)
+	}
+	return strings.Join(words, " ")
+}
+
+func formatLocationWord(word string) string {
+	lowerWord := strings.ToLower(word)
+	runes := []rune(lowerWord)
+	if len(runes) == 0 || unicode.IsDigit(runes[0]) {
+		return lowerWord
+	}
+
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
 }
 
 // retrieve all locations
@@ -89,7 +109,7 @@ func FindLocation(c *gin.Context, db *sql.DB) {
 
 // add a new location
 func AddLocation(c *gin.Context, db *sql.DB) {
-	newLocation := c.Param("location")
+	newLocation := formatLocationName(c.Param("location"))
 
 	if newLocation == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Null Parameter"})
@@ -151,21 +171,32 @@ func DeleteEntry(c *gin.Context, db *sql.DB) {
 
 func EditLocation(c *gin.Context, db *sql.DB) {
 	var location Location
-	currentLocation := c.Param("location")
+	currentLocation := formatLocationName(c.Param("location"))
+
+	if currentLocation == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid location input"})
+		return
+	}
 
 	if err := c.ShouldBindJSON(&location); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
-	if *location.Location == "" {
+	if location.Location == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid location input"})
 		return
 	}
 
-	query := `UPDATE locations SET location = COALESCE(?, location) WHERE location = ?`
+	newLocation := formatLocationName(*location.Location)
+	if newLocation == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid location input"})
+		return
+	}
 
-	result, err := execDB(db, query, location.Location, currentLocation)
+	query := `UPDATE locations SET location = ? WHERE LOWER(location) = LOWER(?)`
+
+	result, err := execDB(db, query, newLocation, currentLocation)
 
 	if err != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Location with this name already exists"})

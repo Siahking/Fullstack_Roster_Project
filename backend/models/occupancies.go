@@ -97,7 +97,7 @@ func RetrieveOccupancies(c *gin.Context, db *sql.DB) {
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in exctracting values\n" + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in extracting values\n" + err.Error()})
 		return
 	}
 	defer rows.Close()
@@ -121,7 +121,7 @@ func RetrieveOccupancies(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, occupancies)
 }
 
-// remove occupancyby occupancy id
+// remove occupancy by occupancy id
 func RemoveOccupancy(c *gin.Context, db *sql.DB) {
 	idStr := c.Param("id")
 
@@ -168,7 +168,7 @@ func EmptyOccupancies(c *gin.Context, db *sql.DB) {
 	_, err2 := execDB(db, query2)
 
 	if err2 != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while reseting autoincrement\n" + err2.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while resetting autoincrement\n" + err2.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Table cleared successfully"})

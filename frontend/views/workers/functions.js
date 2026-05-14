@@ -21,6 +21,19 @@ export const locations = await apiFuncs.getLocations()
 const availabilityOptions = document.querySelectorAll('input[name="availability"]')
 const hoursOptions = document.querySelectorAll('.hours-options')
 
+function formatCapitalizedWords(value){
+    if (!value || !value.trim()) return null
+
+    return value
+        .trim()
+        .split(/\s+/)
+        .map(word => {
+            if (/^\d/.test(word)) return word.toLowerCase()
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        })
+        .join(" ")
+}
+
 tableHeadArray.forEach((item) => {
     const tableHead = document.createElement("th")
     tableHead.innerText = item;
@@ -173,31 +186,11 @@ export async function addWorkerHandler(event){
 
     event.preventDefault()
 
-    const capitalize = (str) => {
-        if (!str) return null;
-        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-    }
-
-    const formatAddress = (address) => {
-        if (!address || address.trim() === "") return null;
-
-        return address
-            .split(" ") // Split the string into an array of words
-            .map(word => {
-            // Handle the case where there might be double spaces
-            if (word.length === 0) return word;
-
-            // Capitalize the first letter and lowercase the rest
-            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-            })
-            .join(" "); // Put the words back together with spaces
-    };
-
-    const firstName = capitalize(document.getElementById('add-first-name-input').value)
-    const lastName = capitalize(document.getElementById('add-last-name-input').value)
-    const middleName = capitalize(document.getElementById('add-middle-name-input').value)
+    const firstName = formatCapitalizedWords(document.getElementById('add-first-name-input').value)
+    const lastName = formatCapitalizedWords(document.getElementById('add-last-name-input').value)
+    const middleName = formatCapitalizedWords(document.getElementById('add-middle-name-input').value)
     const gender = document.getElementById('add-gender-input').value
-    const address = formatAddress(document.getElementById('add-address-input').value)
+    const address = formatCapitalizedWords(document.getElementById('add-address-input').value)
     const contact = document.getElementById('add-contact-input').value
     const age = Number(document.getElementById('add-age-input').value)
     const idNumber = Number(document.getElementById('add-id-number-input').value)
@@ -241,9 +234,9 @@ export async function findWorkers(event){
     event.preventDefault()
 
     const id = idInput.value || null
-    const firstName = firstNameInput.value || null
-    const lastName = lastNameInput.value || null
-    const middleName = middleNameInput.value || null
+    const firstName = formatCapitalizedWords(firstNameInput.value)
+    const lastName = formatCapitalizedWords(lastNameInput.value)
+    const middleName = formatCapitalizedWords(middleNameInput.value)
     const idNumber = idNumberInput.value || null
     let emptyValues = false
 
@@ -288,11 +281,11 @@ export async function editWorker(event){
     event.preventDefault()
 
     const idStr = document.getElementById("target-id").value
-    const newFirstName = document.getElementById("newFirstName").value
-    const newLastName = document.getElementById("newLastName").value
-    const newMiddleName = document.getElementById("newMiddleName").value
+    const newFirstName = formatCapitalizedWords(document.getElementById("newFirstName").value)
+    const newLastName = formatCapitalizedWords(document.getElementById("newLastName").value)
+    const newMiddleName = formatCapitalizedWords(document.getElementById("newMiddleName").value)
     const newGender = document.getElementById("newGender").value
-    const newAddress = document.getElementById("newAddress").value
+    const newAddress = formatCapitalizedWords(document.getElementById("newAddress").value)
     const newContact = document.getElementById("newContact").value
     const newIdNumber = document.getElementById("newIdNumber").value
     const newLocationsCheckbox = document.getElementById("new-location-checkbox")

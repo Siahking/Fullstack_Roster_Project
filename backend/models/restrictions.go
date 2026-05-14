@@ -19,6 +19,18 @@ type PermanentRestriction struct {
 	EndTime   *string `json:"end_time"`
 }
 
+func blankTime(value *string) bool {
+	return value == nil || strings.TrimSpace(*value) == ""
+}
+
+func timeValue(value *string) string {
+	if value == nil {
+		return ""
+	}
+
+	return *value
+}
+
 // create a new permanent restriction
 func CreatePermanentRestriction(c *gin.Context, db *sql.DB) {
 	var permanentRestriction PermanentRestriction
@@ -31,14 +43,17 @@ func CreatePermanentRestriction(c *gin.Context, db *sql.DB) {
 	dayOfWeek := permanentRestriction.DayOfWeek
 	startTime := permanentRestriction.StartTime
 	endTime := permanentRestriction.EndTime
+	if dayOfWeek == "" {
+		dayOfWeek = "Any"
+	}
 
-	if dayOfWeek == "Any" {
-		if *startTime == "" && *endTime == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Please provide valid time values"})
-			return
-		}
-	} else if (startTime == nil || *startTime == "") != (endTime == nil || *endTime == "") {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Please insert a start time and a end time"})
+	if blankTime(startTime) != blankTime(endTime) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Please insert a start time and an end time"})
+		return
+	}
+
+	if dayOfWeek == "Any" && blankTime(startTime) && blankTime(endTime) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Please provide valid time values"})
 		return
 	}
 
@@ -107,7 +122,7 @@ func GetRestrictions(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, restrictions)
 }
 
-// find permanent retstriction based on worker_id or id (permanent restriction id)
+// find permanent restriction based on worker_id or id (permanent restriction id)
 func FindRestriction(c *gin.Context, db *sql.DB) {
 	var restrictions []PermanentRestriction
 	column := strings.TrimSpace(c.Param("column"))
@@ -194,7 +209,10 @@ func EditRestriction(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	if *restriction.StartTime == "99:99:99" && *restriction.EndTime == "99:99:99" {
+	startTimeValue := timeValue(restriction.StartTime)
+	endTimeValue := timeValue(restriction.EndTime)
+
+	if startTimeValue == "99:99:99" && endTimeValue == "99:99:99" {
 		query = `UPDATE permanent_restrictions SET 
 				worker_id = COALESCE(?, worker_id),
 				day_of_week = COALESCE(?::day_of_week_enum, day_of_week),
@@ -202,7 +220,7 @@ func EditRestriction(c *gin.Context, db *sql.DB) {
 
 		result, err = execDB(db, query, restriction.WorkerId, restriction.DayOfWeek, id)
 	} else {
-		if *restriction.StartTime == "99:99:99" {
+		if startTimeValue == "99:99:99" {
 			query = `UPDATE permanent_restrictions SET 
 					worker_id = COALESCE(?, worker_id),
 					day_of_week = COALESCE(?::day_of_week_enum, day_of_week),
@@ -211,7 +229,7 @@ func EditRestriction(c *gin.Context, db *sql.DB) {
 					WHERE id = ?`
 
 			result, err = execDB(db, query, restriction.WorkerId, restriction.DayOfWeek, restriction.EndTime, id)
-		} else if *restriction.EndTime == "99:99:99" {
+		} else if endTimeValue == "99:99:99" {
 			query = `UPDATE permanent_restrictions SET 
 					worker_id = COALESCE(?, worker_id),
 					day_of_week = COALESCE(?::day_of_week_enum, day_of_week),

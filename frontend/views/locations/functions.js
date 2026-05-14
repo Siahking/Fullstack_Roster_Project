@@ -8,8 +8,19 @@ const locationsErrorTag = document.getElementById("no-results-error-tag")
 const resultsContainer = document.getElementById("search-items")
 export const locationsArr = []
 
+function formatLocationName(value){
+    return value
+        .trim()
+        .split(/\s+/)
+        .map(word => {
+            if (/^\d/.test(word)) return word.toLowerCase()
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        })
+        .join(" ")
+}
+
 const valueCheck = ()=>{
-    if (!input.value){
+    if (!input.value.trim()){
         displayError(errorTagId,"Please insert a valid value")
         return false
     }
@@ -63,9 +74,7 @@ export async function deleteLocation(id){
 
 export async function newLocation(){
     if (!valueCheck())return false
-    //capitalize the name before adding it to the backend
-    const nameArray = input.value.split(' ')
-    const capitalizedName = nameArray.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+    const capitalizedName = formatLocationName(input.value)
     const result = await apiFuncs.addLocation(capitalizedName)
     if (objectCheck(result)){
         displayError(errorTagId,result.error)
@@ -82,7 +91,7 @@ function selectOption(value){
 
 export async function findlocation(){
     if (!valueCheck())return false
-    const results = await apiFuncs.findLocation("location",input.value)
+    const results = await apiFuncs.findLocation("location",formatLocationName(input.value))
     if (objectCheck(results)){
         displayError(errorTagId,results.error)
         return
@@ -93,15 +102,13 @@ export async function findlocation(){
 
 export async function editLocation(event){
     event.preventDefault()
-    const currentLocationName = document.getElementById("current-location").value
-    let newLocationName = document.getElementById("new-location").value
+    const currentLocationName = formatLocationName(document.getElementById("current-location").value)
+    const newLocationName = formatLocationName(document.getElementById("new-location").value)
 
     if (!currentLocationName || !newLocationName){
         displayError(errorTagId,"Please insert both the current and new location")
         return
     }
-
-    newLocationName = newLocationName.charAt(0).toUpperCase() + newLocationName.slice(1)
 
     const results = await apiFuncs.editLocation(currentLocationName, newLocationName)
 

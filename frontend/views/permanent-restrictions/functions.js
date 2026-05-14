@@ -117,18 +117,34 @@ export async function addRestriction(event){
         dayOfWeek = "Any"
     }
 
-    const locationId = await apiFuncs.workerLocationSearch("worker_id",workerId)
-    const check = await validateCoverage(locationId[0].location_id,dayOfWeek,workerId)
+    if ((!startTime && endTime) || (startTime && !endTime)){
+        displayError(errorTagId,"Please insert both a start time and an end time")
+        return
+    }
 
-    if (!check){
-        displayError(errorTagId,"Insufficient Workers to set permanent day off")
+    const targetWorker = await apiFuncs.findWorker("","","","",workerId)
+    if (objectCheck(targetWorker)){
+        displayError(errorTagId,targetWorker.error)
+        return
+    }
+
+    const locationId = await apiFuncs.workerLocationSearch("worker_id",workerId)
+    if (objectCheck(locationId)){
+        displayError(errorTagId,"A worker with this ID does not exist or has no location")
+        return
+    }
+
+    const check = await validateCoverage(locationId[0].location_id,dayOfWeek,targetWorker[0],startTime,endTime)
+
+    if (objectCheck(check)){
+        displayError(errorTagId,check.error)
         return
     }
 
     const result = await apiFuncs.createRestriction(workerId,dayOfWeek,startTime,endTime)
 
     if (objectCheck(result)){
-        displayError(errorTagId,"Insufficient Workers to set permanent day off")
+        displayError(errorTagId,result.error)
         return
     }
 
@@ -186,4 +202,11 @@ export async function editRestriction(event){
     }
 
     const result = await apiFuncs.editPermanentRestriction(restrictionId,newWorker,newDay,newStartTime,newEndTime)
+    if (objectCheck(result)){
+        displayError(errorTagId,result.error)
+        return
+    }
+
+    sessionStorage.setItem("Message",result.message)
+    window.location.href = "/home"
 }

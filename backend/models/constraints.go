@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"net/http"
 	"strconv"
+	"strings"
+	"unicode"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,14 +17,36 @@ type Constraint struct {
 	Note    *string `json:"note"`
 }
 
+func formatConstraintNote(value string) string {
+	trimmedValue := strings.TrimSpace(value)
+	if trimmedValue == "" {
+		return ""
+	}
+
+	runes := []rune(trimmedValue)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
+}
+
+func normalizeConstraintNote(constraint *Constraint) {
+	if constraint.Note == nil {
+		return
+	}
+
+	normalized := formatConstraintNote(*constraint.Note)
+	constraint.Note = &normalized
+}
+
 // Create constraint
-func CreateConstrant(c *gin.Context, db *sql.DB) {
+func CreateConstraint(c *gin.Context, db *sql.DB) {
 	var constraint Constraint
 
 	if err := c.ShouldBindJSON(&constraint); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
+
+	normalizeConstraintNote(&constraint)
 
 	query := "INSERT INTO worker_constraints (worker1_id,worker2_id,note) VALUES (?,?,?)"
 
@@ -61,10 +85,10 @@ func FindConstraint(c *gin.Context, db *sql.DB) {
 	worker2Id := c.Query("worker2_id")
 
 	idStr := c.Query("id")
-	worker1FirstName := c.Query("worker1_firstname")
-	worker1LastName := c.Query("worker1_lastname")
-	worker2FirstName := c.Query("worker2_firstname")
-	worker2LastName := c.Query("worker2_lastname")
+	worker1FirstName := formatWorkerText(c.Query("worker1_firstname"))
+	worker1LastName := formatWorkerText(c.Query("worker1_lastname"))
+	worker2FirstName := formatWorkerText(c.Query("worker2_firstname"))
+	worker2LastName := formatWorkerText(c.Query("worker2_lastname"))
 	baseString1 := `SELECT wc.id,w1.first_name AS worker1_firstname,w1.last_name AS worker1_lastname,w2.first_name AS worker2_firstname,
 					w2.last_name AS worker2_lastname,wc.note AS note 
 					FROM worker_constraints wc 
@@ -86,7 +110,7 @@ func FindConstraint(c *gin.Context, db *sql.DB) {
 	if worker1Id != "" && worker2Id != "" {
 		query = baseString2 + " WHERE worker1_id = ? AND worker2_id = ?"
 		rows, err = queryDB(db, query, worker1Id, worker2Id)
-	} else if id == 0 && worker1FirstName == "" && worker1LastName == "" && worker2FirstName == "" {
+	} else if id == 0 && worker1FirstName == "" && worker1LastName == "" && worker2FirstName == "" && worker2LastName == "" {
 		rows, err = queryDB(db, baseString2)
 	} else if id > 0 {
 		query = baseString2 + " WHERE id = ?"
@@ -95,15 +119,15 @@ func FindConstraint(c *gin.Context, db *sql.DB) {
 		advancedSearch = true
 		if worker1FirstName != "" && worker2FirstName != "" {
 			query = baseString1 + `(
-				(w1.first_name = ? AND w1.last_name = ? AND w2.first_name = ? AND w2.last_name = ? )
+				(LOWER(w1.first_name) = LOWER(?) AND LOWER(w1.last_name) = LOWER(?) AND LOWER(w2.first_name) = LOWER(?) AND LOWER(w2.last_name) = LOWER(?) )
 				OR 
-				(w1.first_name = ? AND w1.last_name = ? AND w2.first_name = ? AND w2.last_name = ? )
+				(LOWER(w1.first_name) = LOWER(?) AND LOWER(w1.last_name) = LOWER(?) AND LOWER(w2.first_name) = LOWER(?) AND LOWER(w2.last_name) = LOWER(?) )
 			)`
 			rows, err = queryDB(db,
 				query, worker1FirstName, worker1LastName, worker2FirstName, worker2LastName,
 				worker2FirstName, worker2LastName, worker1FirstName, worker1LastName)
 		} else if worker1FirstName != "" || worker2FirstName != "" {
-			query = baseString1 + ` (w1.first_name = ? AND w1.last_name = ? OR w2.first_name = ? AND w2.last_name = ?)`
+			query = baseString1 + ` (LOWER(w1.first_name) = LOWER(?) AND LOWER(w1.last_name) = LOWER(?) OR LOWER(w2.first_name) = LOWER(?) AND LOWER(w2.last_name) = LOWER(?))`
 			if worker1FirstName != "" {
 				rows, err = queryDB(db, query, worker1FirstName, worker1LastName, worker1FirstName, worker1LastName)
 			} else {
@@ -130,7 +154,7 @@ func FindConstraint(c *gin.Context, db *sql.DB) {
 			innerError := rows.Scan(&constraint.ID, &constraint.Worker1FirstName, &constraint.Worker1LastName,
 				&constraint.Worker2FirstName, &constraint.Worker2LastName, &constraint.Note)
 			if innerError != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while scanning location\n" + innerError.Error()})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while scanning constraint\n" + innerError.Error()})
 				return
 			}
 			results = append(results, constraint)
@@ -149,7 +173,7 @@ func FindConstraint(c *gin.Context, db *sql.DB) {
 			var constraint Constraint
 			innerError := rows.Scan(&constraint.ID, &constraint.Worker1, &constraint.Worker2, &constraint.Note)
 			if innerError != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while scanning location\n" + innerError.Error()})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while scanning constraint\n" + innerError.Error()})
 				return
 			}
 			constraints = append(constraints, constraint)
@@ -180,6 +204,8 @@ func EditConstraints(c *gin.Context, db *sql.DB) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
+
+	normalizeConstraintNote(&constraint)
 
 	query := `UPDATE worker_constraints SET 
 			worker1_id = COALESCE(?, worker1_id),

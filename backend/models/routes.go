@@ -158,7 +158,7 @@ func apiRouter(router *gin.Engine, db *sql.DB) {
 	//CONTRAINTS ROUTES
 	//create a constraint
 	protected.POST("/create-constraint", func(c *gin.Context) {
-		CreateConstrant(c, db)
+		CreateConstraint(c, db)
 	})
 	//find a constraint
 	protected.GET("/find-constraints", func(c *gin.Context) {

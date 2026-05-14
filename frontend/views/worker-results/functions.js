@@ -15,15 +15,23 @@ export async function showWorkers (){
 
         const tableRow = document.createElement("tr")
 
-        for (const field of workerArr){
+        workerArr.forEach((field,index) => {
+            const classObj = {
+                5:"addressClass",
+                6:"contactClass",
+                9:"availablityClass"
+            }
             const tableData = document.createElement("td")
             if (field){
                 tableData.innerText = field
             }else{
                 tableData.innerText = "Null"
             }
-            tableRow.append(tableData)
-        }
+
+            if (classObj[index])tableData.classList.add(classObj[index])
+
+            tableRow.appendChild(tableData)
+        })
         const locationsRow = document.createElement("td")
         const locationsResults = await apiFuncs.workerLocationSearch("worker_id",worker.id)
 

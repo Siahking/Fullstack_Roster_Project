@@ -96,6 +96,11 @@ export async function newDaysOff(event){
     const workerDetails = await apiFuncs.findWorker("","","","",workerId)
     const workerLocations = await apiFuncs.workerLocationSearch("worker_id",workerId)
 
+    if (objectCheck(workerDetails)){
+        displayError(errorTagId,"A worker with this ID does not exist")
+        return
+    }
+
     if (workerLocations.error){
         displayError(errorTagId,"A worker with this ID does not exist")
         return

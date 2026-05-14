@@ -123,8 +123,8 @@ function restrictionCheck(day,workerId,hours){
     if (restrictions[workerId]){
         const workerRestrictions = restrictions[workerId]
         for (const restriction of workerRestrictions){
-            if (restriction.day_of_week === day){
-                if (!restrictionStartTime && !restrictionEndTime){
+            if (restriction.day_of_week === "Any" || restriction.day_of_week === day){
+                if (!restriction.start_time && !restriction.end_time){
                     return false
                 }
                 const strStartTime = restriction.start_time.split(":")[0]
@@ -155,12 +155,7 @@ function restrictionCheck(day,workerId,hours){
                         break
                 }
 
-                if (
-                    (restrictionStartTime > shiftStart && restrictionEndTime < shiftEnd) ||
-                    (restrictionEndTime > shiftStart && restrictionEndTime < shiftEnd) ||
-                    (restrictionStartTime < shiftStart && restrictionEndTime > shiftEnd) ||
-                    (restrictionStartTime > shiftEnd && restrictionEndTime < shiftEnd)
-                ){
+                if (shiftsOverlap(restrictionStartTime,restrictionEndTime,shiftStart,shiftEnd)){
                     return false
                 }
             }
@@ -170,16 +165,32 @@ function restrictionCheck(day,workerId,hours){
     return true
 }
 
+function splitShiftInterval(start,end){
+    if (start === end)return [[0,24]]
+    if (end > start)return [[start,end]]
+    return [[start,24],[0,end]]
+}
+
+function shiftsOverlap(firstStart,firstEnd,secondStart,secondEnd){
+    const firstIntervals = splitShiftInterval(firstStart,firstEnd)
+    const secondIntervals = splitShiftInterval(secondStart,secondEnd)
+
+    return firstIntervals.some(([aStart,aEnd]) =>
+        secondIntervals.some(([bStart,bEnd]) => aStart < bEnd && bStart < aEnd)
+    )
+}
+
  async function dayOffCheck(day,month,year,daysOff){
-    const occupancies = await apiFuncs.retrieveOccupancies("event_date",`${year}-${month}-${day}`)
+    const dateString = dateToString(Number(day),Number(month),Number(year))
+    const occupancies = await apiFuncs.retrieveOccupancies(dateString)
 
     //stores all workers off on this day
     //stores the workers which requested days off first
     const obj = {}
     for (const result of daysOff){
         const startDate = new Date(result.start_date)
-        const endDate = new Date(result.endDate)
-        const currentDate = new Date(year, month, day);
+        const endDate = new Date(result.end_date)
+        const currentDate = new Date(dateString)
 
         if (currentDate >= startDate && currentDate <= endDate ) {
             obj[result.worker_id] = true;
@@ -270,8 +281,8 @@ export async function filterWorkers(workerId,shiftType,locationId,date,otherWork
 
     const [workers,daysOff,constraints] = await Promise.all([
         apiFuncs.retrieveWorkerOrLocations("location_id",locationId),
-        apiFuncs.getDaysOff("worker_id",workerId),
-        apiFuncs.getConstraints("",workerId)
+        apiFuncs.getDaysOff(),
+        apiFuncs.getConstraints()
     ])
 
     if (!daysOff.error){
@@ -286,9 +297,9 @@ export async function filterWorkers(workerId,shiftType,locationId,date,otherWork
 
         if (worker.id == workerId)return false
 
-        if (excludedWorkers[workerId])return false
+        if (excludedWorkers[worker.id])return false
 
-        const isRestricted = restrictionCheck(dayName,workerId,shiftType)
+        const isRestricted = restrictionCheck(dayName,worker.id,shiftType)
         if (!isRestricted)return false
 
         return true
@@ -306,6 +317,7 @@ export async function filterGeneralShiftWorkers(shiftType,locationId,date,otherW
         "10pm-6am": ["10pm-6am", "6pm-6am"]
     }
     const [year, month, day] = date.split("-")
+    const dayName = new Date(date).toLocaleDateString("en-US", { weekday: "long" })
     const dayCell = document.getElementById(`${locationId}-day-${day}`)
     const dateWorkersCells = Array.from(dayCell.querySelectorAll(".workerContainer"))
 
@@ -320,12 +332,13 @@ export async function filterGeneralShiftWorkers(shiftType,locationId,date,otherW
     const relevantShifts = shiftConflicts[shiftType] || []
     const workersToExclude = relevantShifts.flatMap(shift => dateWorkers[shift] || [])
 
+    const optionalWorkerIds = Array.isArray(optionalWorkers) ? optionalWorkers : [optionalWorkers]
     const workers = await apiFuncs.retrieveWorkerOrLocations("location_id", locationId)
     const shiftWorkers = []
     const availableWorkers = []
 
     for (const worker of workers){
-        if (Array.isArray(optionalWorkers) && optionalWorkers.some(id => id === worker.id))continue
+        if (optionalWorkerIds.some(id => Number(id) === worker.id))continue
         
         if (!worker["hours"].includes(shiftType))continue
 
@@ -338,28 +351,24 @@ export async function filterGeneralShiftWorkers(shiftType,locationId,date,otherW
             if (excluded[worker.id])isOff = true
         }
         if (isOff) continue
+        if (!restrictionCheck(dayName,worker.id,shiftType))continue
         shiftWorkers.push(worker)
     }
 
-    for (const option of shiftWorkers){
-        const workerContraints = await apiFuncs.getConstraints(option.id)
-        if (objectCheck(workerContraints)){
-            availableWorkers.push(option)
-            continue
-        }
-        let constraintFound = false
+    const constraints = await apiFuncs.getConstraints()
+    if (objectCheck(constraints)){
+        return shiftWorkers
+    }
 
-        for (const constraint of workerContraints){
-            for (const worker of otherWorkers){
-                if (constraint === worker.id){
-                    constraintFound = true
-                    break
-                }
-            }
-            if (constraintFound)break
-        }
-        if (constraintFound)continue
-        availableWorkers.push(option)
+    for (const option of shiftWorkers){
+        const constraintFound = otherWorkers.some(workerId =>
+            constraints.some(constraint =>
+                (constraint.worker1_id === option.id && constraint.worker2_id === Number(workerId)) ||
+                (constraint.worker2_id === option.id && constraint.worker1_id === Number(workerId))
+            )
+        )
+
+        if (!constraintFound)availableWorkers.push(option)
     }
 
     return availableWorkers

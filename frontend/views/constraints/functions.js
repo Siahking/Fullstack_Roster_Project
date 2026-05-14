@@ -12,6 +12,26 @@ const worker2IdInput = document.getElementById("worker2Id-input")
 const newSummary = document.getElementById("new-summary-input")
 const tableErrorTag = document.getElementById("message-container")
 
+function formatWorkerName(value){
+    if (!value || !value.trim()) return ""
+
+    return value
+        .trim()
+        .split(/\s+/)
+        .map(word => {
+            if (/^\d/.test(word)) return word.toLowerCase()
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        })
+        .join(" ")
+}
+
+function formatSummary(value){
+    if (!value || !value.trim()) return ""
+
+    const trimmedValue = value.trim()
+    return trimmedValue.charAt(0).toUpperCase() + trimmedValue.slice(1)
+}
+
 export async function removeConstraint(id){
     const result = await apiFuncs.deleteConstraints(id)
     if (deleteConfirmation("constraint")){
@@ -34,7 +54,7 @@ export async function addConstraint(event){
         return
     }
 
-    const result = await apiFuncs.createConstraint(worker1Id.value,worker2Id.value,summary.value)
+    const result = await apiFuncs.createConstraint(worker1Id.value,worker2Id.value,formatSummary(summary.value))
     if (objectCheck(result)){
         displayError(errorTagId,result.error)
         return
@@ -78,7 +98,7 @@ export async function displayConstraints(){
         IDData.innerText = constraint.id
         worker1Data.innerText = worker1Info
         worker2Data.innerText = worker2Info
-        summaryData.innerText = constraint.note === "" ? "---" : constraint.note
+        summaryData.innerText = constraint.note === "" ? "---" : formatSummary(constraint.note)
 
         for (const value of [IDData,worker1Data,worker2Data,summaryData]){
             tableRow.appendChild(value)
@@ -96,10 +116,10 @@ export async function findConstraint(event){
 
     let results
 
-    const worker1FirstName = document.getElementById("worker1-firstname").value
-    const worker1LastName = document.getElementById("worker1-lastname").value
-    const worker2FirstName = document.getElementById("worker2-firstname").value
-    const worker2LastName = document.getElementById("worker2-lastname").value
+    const worker1FirstName = formatWorkerName(document.getElementById("worker1-firstname").value)
+    const worker1LastName = formatWorkerName(document.getElementById("worker1-lastname").value)
+    const worker2FirstName = formatWorkerName(document.getElementById("worker2-firstname").value)
+    const worker2LastName = formatWorkerName(document.getElementById("worker2-lastname").value)
 
     if (worker1FirstName && worker2FirstName){
         if (!worker1LastName || !worker2LastName){
@@ -111,7 +131,7 @@ export async function findConstraint(event){
         if (!worker2LastName){
             displayError(errorTagId,errorMessage)
         }else{
-            results = await apiFuncs.getConstraints("","","",worker2FirstName,worker2LastName)
+            results = await apiFuncs.getConstraints("","","","","",worker2FirstName,worker2LastName)
         }
     }else if (worker1FirstName){
         if (!worker1LastName){
@@ -130,7 +150,7 @@ export async function findConstraint(event){
     }
 
     localStorage.setItem("Constraints",JSON.stringify(results))
-    window.location.href = "/find-contraints"
+    window.location.href = "/find-constraints"
 }
 
 export async function changeConstraint(event){
@@ -141,7 +161,7 @@ export async function changeConstraint(event){
         displayError(errorTagId,"Constraint ID Required")
         return
     }
-    const result = await apiFuncs.editConstraints(constraintId.value,worker1IdInput.value,worker2IdInput.value,newSummary.value)
+    const result = await apiFuncs.editConstraints(constraintId.value,worker1IdInput.value,worker2IdInput.value,formatSummary(newSummary.value))
 
     if (objectCheck(result)){
         displayError(errorTagId,result.error)

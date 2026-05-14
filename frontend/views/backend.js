@@ -35,12 +35,12 @@ export async function getLocations() {
 };
 
 export async function addLocation(locationName) {
-    const url = `locations/${locationName}`
+    const url = `locations/${encodeURIComponent(locationName)}`
     return apiRequest(url,"POST")
 };
 
 export async function findLocation(column,value){
-    const url = `locations/${column}/${value}`
+    const url = `locations/${column}/${encodeURIComponent(value)}`
     return apiRequest(url)
 }
 
@@ -51,7 +51,7 @@ export async function editLocation(currentLocationName,newLocationName){
 
     let location = newLocationName
 
-    const url = `edit-location/${currentLocationName}`
+    const url = `edit-location/${encodeURIComponent(currentLocationName)}`
     return apiRequest(url,"PATCH",{location})
 }
 
@@ -211,7 +211,7 @@ export async function getConstraints(
             url.searchParams.append("worker1_lastname",worker1LastName)
         }
         if (worker2FirstName){
-            if (!worker1LastName)return {"error":"Both the firstname and the lastname is required"}
+            if (!worker2LastName)return {"error":"Both the firstname and the lastname is required"}
             url.searchParams.append("worker2_firstname",worker2FirstName)
             url.searchParams.append("worker2_lastname",worker2LastName)
         }

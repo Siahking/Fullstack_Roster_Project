@@ -22,7 +22,7 @@ func AddDaysOff(c *gin.Context, db *sql.DB) {
 	var daysOff DaysOff
 
 	if err := c.ShouldBind(&daysOff); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalud request body\n" + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body\n" + err.Error()})
 		return
 	}
 
@@ -153,9 +153,9 @@ func EditDayOff(c *gin.Context, db *sql.DB) {
 	var dayOff DaysOff
 	idStr := c.Param("id")
 
-	id, conversonErr := strconv.Atoi(idStr)
+	id, conversionErr := strconv.Atoi(idStr)
 
-	if conversonErr != nil {
+	if conversionErr != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID parameter"})
 		return
 	}
@@ -184,9 +184,9 @@ func EditDayOff(c *gin.Context, db *sql.DB) {
 		case hasPostgresCode(err, pgForeignKeyViolation):
 			errMsg = "Worker with this ID does not exist"
 		case hasPostgresCode(err, pgCheckViolation):
-			errMsg = "End Date must be after Start Date and Start Date Must be After the End Date"
+			errMsg = "End date must be after start date"
 		case hasPostgresCode(err, pgUniqueViolation):
-			errMsg = "Duplicate Entry, a constraint with this ID Number already exists"
+			errMsg = "Duplicate entry, this temporary leave already exists"
 		default:
 			errMsg = "Unknown error occurred"
 		}
