@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -246,6 +247,12 @@ func AuthRequired() gin.HandlerFunc {
 		user := session.Get("user")
 
 		if user == nil {
+			if expectsJSON(c) {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Please log in again"})
+				c.Abort()
+				return
+			}
+
 			c.Redirect(http.StatusFound, "/login")
 			c.Abort()
 			return
@@ -253,4 +260,14 @@ func AuthRequired() gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func expectsJSON(c *gin.Context) bool {
+	accept := c.GetHeader("Accept")
+	contentType := c.GetHeader("Content-Type")
+	requestedWith := c.GetHeader("X-Requested-With")
+
+	return strings.Contains(accept, "application/json") ||
+		strings.Contains(contentType, "application/json") ||
+		strings.EqualFold(requestedWith, "XMLHttpRequest")
 }

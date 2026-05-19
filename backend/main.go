@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"final-project/models"
@@ -33,7 +34,7 @@ func main() {
 
 	//Initialize sessions
 	store := cookie.NewStore([]byte("super-secret-key"))
-	secureCookie := os.Getenv("COOKIE_SECURE") == "true"
+	secureCookie := secureCookieEnabled()
 	sameSite := http.SameSiteLaxMode
 	if secureCookie {
 		sameSite = http.SameSiteNoneMode
@@ -50,8 +51,8 @@ func main() {
 
 	//Allow cors
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://127.0.0.1:5501", "http://127.0.0.1:5500", "http://localhost:5500", "https://fullstack-roster-project.vercel.app"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowOrigins:     allowedOrigins(),
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
@@ -69,4 +70,36 @@ func main() {
 	fmt.Printf("Starting Gin server on :%s\n", port)
 
 	log.Fatal(router.Run(":" + port))
+}
+
+func secureCookieEnabled() bool {
+	value := strings.ToLower(strings.TrimSpace(os.Getenv("COOKIE_SECURE")))
+	if value != "" {
+		return value == "true"
+	}
+
+	return gin.Mode() == gin.ReleaseMode || os.Getenv("RENDER") != "" || os.Getenv("RENDER_EXTERNAL_URL") != ""
+}
+
+func allowedOrigins() []string {
+	origins := []string{
+		"http://127.0.0.1:5501",
+		"http://127.0.0.1:5500",
+		"http://localhost:5500",
+		"http://localhost:8080",
+		"https://fullstack-roster-project.vercel.app",
+	}
+
+	for _, origin := range strings.Split(os.Getenv("FRONTEND_URLS"), ",") {
+		origin = strings.TrimSpace(origin)
+		if origin != "" {
+			origins = append(origins, origin)
+		}
+	}
+
+	if origin := strings.TrimSpace(os.Getenv("FRONTEND_URL")); origin != "" {
+		origins = append(origins, origin)
+	}
+
+	return origins
 }

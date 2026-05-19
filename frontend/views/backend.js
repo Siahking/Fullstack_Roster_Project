@@ -5,13 +5,46 @@ const BASEURL = LOCAL_HOSTS.has(window.location.hostname)
     ? `${window.location.origin}/`
     : "https://optiroster.onrender.com/";
 
+async function readJsonResponse(response){
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")){
+        return response.json();
+    }
+
+    const text = await response.text();
+    if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")){
+        throw new Error(`Server returned HTML instead of JSON (${response.status}). Please log in again or check the API deployment URL.`);
+    }
+
+    throw new Error(text || `Server returned a non-JSON response (${response.status})`);
+}
+
+async function fetchJson(url, options = {}){
+    const headers = {
+        "Accept": "application/json",
+        ...options.headers,
+    };
+
+    const response = await fetch(url, {
+        credentials: "include",
+        ...options,
+        headers,
+    });
+    const result = await readJsonResponse(response);
+
+    if (!response.ok){
+        throw new Error(result?.error || `Error: ${response.status} ${response.statusText}`);
+    }
+
+    return result;
+}
+
 //function to manage general api calls
 async function apiRequest(endpoint, method = "GET", body = null){
     const url = `${BASEURL}${endpoint}`
     const options = {
         method,
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
     };
 
     if (body){
@@ -19,13 +52,7 @@ async function apiRequest(endpoint, method = "GET", body = null){
     }
 
     try {
-        const response = await fetch(url, options);
-        const result = await response.json();
-        if (!response.ok){
-            throw new Error(result?.error || `Error: ${response.status} ${response.statusText}`)
-        }
-
-        return result
+        return await fetchJson(url, options);
     }catch(error) {
         return { error: error.message }
     }
@@ -84,10 +111,11 @@ export async function findWorker(firstName="",lastName="",middleName="",idNumber
         if (middleName) url.searchParams.append("middle_name", middleName);
     };
 
-    const response = await fetch(url, { credentials: "include" })
-    const data = await response.json()
-
-    return data
+    try{
+        return await fetchJson(url)
+    }catch(error){
+        return { error: error.message }
+    }
 }
 
 export async function editWorker(
@@ -196,7 +224,6 @@ export async function createConstraint(worker1IdStr,worker2IdStr,note=""){
 export async function getConstraints(
     id=null,worker1Id=null,worker2Id=null,worker1FirstName=null,worker1LastName=null,worker2FirstName=null,worker2LastName=null
 ){
-    let result
     const url = new URL(`${BASEURL}find-constraints`)
     if (worker1Id && worker2Id){
         url.searchParams.append("worker1_id",worker1Id)
@@ -216,10 +243,11 @@ export async function getConstraints(
             url.searchParams.append("worker2_lastname",worker2LastName)
         }
     }
-    result = await fetch(url, { credentials: "include" })
-    const data = await result.json()
-
-    return data
+    try{
+        return await fetchJson(url)
+    }catch(error){
+        return { error: error.message }
+    }
 }
 
 export async function editConstraints(id,worker1IdStr="",worker2IdStr="",note=""){ // working
@@ -289,10 +317,11 @@ export async function getDaysOff(column="",value=""){
         url = `${BASEURL}get-days-off`
     }
 
-    const results = await fetch(url, { credentials: "include" })
-    const data = await results.json()
-
-    return data
+    try{
+        return await fetchJson(url)
+    }catch(error){
+        return { error: error.message }
+    }
 }
 
 export async function removeDaysOff(breakId){
